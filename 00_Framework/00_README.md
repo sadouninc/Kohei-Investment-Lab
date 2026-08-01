@@ -15,6 +15,7 @@ Kohei Investment Labの投資判断を支える、長期的な思想・原則・
 - [05_Evaluation_Framework.md](05_Evaluation_Framework.md): 企業を評価する共通の物差し
 - [06_Capital_Allocation.md](06_Capital_Allocation.md): 期待値に基づく資金配分の考え方
 - [07_Lessons_Learned.md](07_Lessons_Learned.md): 投資から得た再利用可能な教訓
+- [08_Original_Metrics.md](08_Original_Metrics.md): PERを補完する独自指標と検証履歴
 
 ## Usage
 
@@ -22,8 +23,9 @@ Kohei Investment Labの投資判断を支える、長期的な思想・原則・
 2. 企業価値と市場心理を分けて分析する
 3. Thinking Processに沿って事実・解釈・仮説を整理する
 4. Evaluation Frameworkで同じ基準から評価する
-5. Capital Allocationで資金の配分を決める
-6. 結果をLessons Learnedへ戻し、Frameworkを育てる
+5. 必要に応じてOriginal Metricsで成長性と市場期待を補助評価する
+6. Capital Allocationで資金の配分を決める
+7. 結果をLessons Learnedへ戻し、Frameworkを育てる
 
 ---
 
