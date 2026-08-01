@@ -2,6 +2,10 @@
 
 Kohei Investment Labの投資判断を支える、長期的な思想・原則・評価方法をまとめるディレクトリです。
 
+> **Kohei Investment Labは、利益を追うだけの投資手法ではない。**
+>
+> **市場との対話を通じて、市場を理解し、企業を理解し、自分自身の投資理論を磨き続けるための研究所である。**
+
 ## Files
 
 - [01_Investment_Philosophy.md](01_Investment_Philosophy.md): 長期的に変わらない投資思想
@@ -20,3 +24,21 @@ Kohei Investment Labの投資判断を支える、長期的な思想・原則・
 4. Evaluation Frameworkで同じ基準から評価する
 5. Capital Allocationで資金の配分を決める
 6. 結果をLessons Learnedへ戻し、Frameworkを育てる
+
+---
+
+## Philosophy
+
+このFrameworkは完成形ではない。
+
+市場は変わる。社会は変わる。技術も変わる。
+
+したがって、このFrameworkも経験と検証を通じて進化し続ける。
+
+私は市場を完全に予測することを目指さない。
+
+市場を継続して観察し、対話し、その時々の変化を理解することを目指す。
+
+企業を分析するだけでなく、実際の市場参加を通じて感覚を磨き、得られた経験を投資理論へ戻していく。
+
+この循環を続けることが、Kohei Investment Labの目的である。
