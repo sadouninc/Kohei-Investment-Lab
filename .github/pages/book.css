@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  --paper: #f4f0e7;
+  --paper-deep: #e8e0d1;
+  --ink: #171612;
+  --muted: #6f695e;
+  --line: #cfc5b4;
+  --accent: #8b2d2d;
+  --accent-soft: #ead8d1;
+  --card: rgba(255,255,255,.48);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #151512;
+  --paper-deep: #20201b;
+  --ink: #eee9df;
+  --muted: #aaa398;
+  --line: #3d3b34;
+  --accent: #d98673;
+  --accent-soft: #442b27;
+  --card: rgba(255,255,255,.035);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 2rem; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 10% 0%, var(--paper-deep), transparent 35rem),
+    var(--paper);
+  color: var(--ink);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 17px;
+  line-height: 2;
+  transition: background .25s ease, color .25s ease;
+}
+a { color: var(--accent); text-underline-offset: .2em; }
+.book-shell { width: min(100% - 40px, 840px); margin: 0 auto; padding: 0 0 16vh; }
+.book-hero { min-height: 82vh; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid var(--line); }
+.eyebrow, .toc-label, .edition { color: var(--accent); font-size: .72rem; font-weight: 700; letter-spacing: .22em; }
+.book-hero h1 {
+  max-width: 720px;
+  margin: .35em 0;
+  font-family: "Noto Serif JP", serif;
+  font-size: clamp(2.7rem, 8vw, 5.4rem);
+  line-height: 1.25;
+  letter-spacing: -.04em;
+}
+.lead { max-width: 650px; color: var(--muted); font-family: "Noto Serif JP", serif; font-size: clamp(1.05rem, 2.5vw, 1.35rem); }
+.edition { margin-top: 4rem; }
+.book-toc { margin: 12vh 0 4rem; padding: clamp(1.5rem, 5vw, 3.5rem); background: var(--card); border: 1px solid var(--line); }
+.book-toc ol { margin: 1rem 0 0; padding-left: 1.5rem; columns: 2; column-gap: 3rem; }
+.book-toc li { break-inside: avoid; padding: .35rem 0; }
+.book-toc a { color: var(--ink); text-decoration-color: var(--line); }
+.reading-note { color: var(--muted); font-size: .86rem; margin-bottom: 18vh; }
+.book-chapter { padding: 10vh 0 4vh; border-top: 1px solid var(--line); }
+.book-chapter > h1:first-of-type {
+  margin: 0 0 2.5rem;
+  font-family: "Noto Serif JP", serif;
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: 1.3;
+}
+h2, h3, h4 { font-family: "Noto Serif JP", serif; line-height: 1.5; }
+h2 { margin-top: 3.5em; font-size: clamp(1.55rem, 4vw, 2.15rem); }
+h3 { margin-top: 2.7em; font-size: 1.25rem; }
+p { margin: 1.2em 0; }
+blockquote { margin: 2.5rem 0; padding: .5rem 0 .5rem 1.5rem; border-left: 3px solid var(--accent); color: var(--muted); }
+hr { margin: 4rem 0; border: 0; border-top: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; margin: 2rem 0; font-size: .92rem; }
+th, td { padding: .7rem .8rem; border: 1px solid var(--line); text-align: left; }
+pre { overflow-x: auto; padding: 1.2rem; background: var(--paper-deep); border: 1px solid var(--line); line-height: 1.6; }
+code { font-size: .9em; }
+.book-end { margin-top: 12vh; padding-top: 2rem; border-top: 1px solid var(--line); color: var(--muted); text-align: center; letter-spacing: .12em; }
+.reading-progress { position: fixed; z-index: 20; inset: 0 0 auto; height: 3px; background: transparent; }
+.reading-progress span { display: block; width: 0; height: 100%; background: var(--accent); }
+.theme-toggle, .back-to-top {
+  position: fixed; z-index: 10; right: 18px; display: grid; place-items: center;
+  width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 50%;
+  background: var(--paper); color: var(--ink); text-decoration: none; cursor: pointer;
+}
+.theme-toggle { top: 18px; font-size: 1.1rem; }
+.back-to-top { bottom: 18px; }
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .book-shell { width: min(100% - 30px, 840px); }
+  .book-toc ol { columns: 1; }
+  .book-hero { min-height: 72vh; }
+  table { display: block; overflow-x: auto; }
+}
+@media print {
+  .theme-toggle, .back-to-top, .reading-progress { display: none; }
+  body { background: white; color: black; }
+  .book-chapter { break-before: page; }
+}
