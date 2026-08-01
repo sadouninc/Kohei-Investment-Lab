@@ -17,6 +17,10 @@ Kohei Investment Labの投資判断を支える、長期的な思想・原則・
 - [07_Lessons_Learned.md](07_Lessons_Learned.md): 投資から得た再利用可能な教訓
 - [08_Original_Metrics.md](08_Original_Metrics.md): PERを補完する独自指標と検証履歴
 
+## Templates
+
+- [Theme_Template.md](../07_Templates/Theme_Template.md): テーマ分析を統一形式で記録するテンプレート
+
 ## Usage
 
 1. 投資判断の前に思想とルールを確認する
