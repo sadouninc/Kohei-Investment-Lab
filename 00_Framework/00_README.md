@@ -8,7 +8,7 @@ Kohei Investment Labの投資判断を支える、長期的な思想・原則・
 
 ## Files
 
-- [01_Investment_Philosophy.md](01_Investment_Philosophy.md): 長期的に変わらない投資思想
+- [01_Investment_Philosophy.md](01_Investment_Philosophy.md): 長期的な投資思想、投資を行う目的、手法や時間軸との向き合い方
 - [02_Market_Psychology.md](02_Market_Psychology.md): 市場参加者の期待、恐怖、需給の理解
 - [03_Thinking_Process.md](03_Thinking_Process.md): 分析から判断までの思考手順
 - [04_Investment_Rules.md](04_Investment_Rules.md): 売買とリスク管理のルール
