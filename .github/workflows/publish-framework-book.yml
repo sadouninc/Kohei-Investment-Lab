@@ -36,7 +36,7 @@ jobs:
           cp .github/pages/book.css book-src/assets/book.css
 
           while IFS='|' read -r anchor file; do
-            printf '\n<section class="book-chapter" id="%s">\n' "$anchor" >> book-src/index.md
+            printf '\n<section class="book-chapter" id="%s" markdown="1">\n' "$anchor" >> book-src/index.md
             cat "$file" >> book-src/index.md
             printf '\n</section>\n' >> book-src/index.md
           done <<'CHAPTERS'
