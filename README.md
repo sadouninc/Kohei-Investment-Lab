@@ -8,8 +8,8 @@ Codexは作業開始時に必ず [Current_Status.md](Current_Status.md) を読�
 
 - `00_Framework/`: 投資思想・ルール・評価軸
 - `01_Portfolio/`: 保有・監視・売買・成績
-- `02_Companies/`: 分野別企業分析
-- `03_Themes/`: 投資テーマ
+- `02_Themes/`: 投資テーマ
+- `03_Companies/`: 分野別企業分析
 - `04_Market/`: 市場観測
 - `05_Decision_Log/`: 意思決定と振り返り
 - `06_Research/`: IR・決算・ニュース・業界調査
