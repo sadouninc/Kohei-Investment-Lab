@@ -38,6 +38,19 @@ body {
 a { color: var(--accent); text-underline-offset: .2em; }
 .book-shell { width: min(100% - 40px, 840px); margin: 0 auto; padding: 0 0 16vh; }
 .book-hero { min-height: 82vh; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid var(--line); }
+.book-overview { margin: clamp(2.5rem, 6vw, 5rem) 0; }
+.book-overview h2 { margin-bottom: .75rem; }
+.book-overview > p { max-width: 52rem; font-size: clamp(1rem, 2vw, 1.2rem); line-height: 2; }
+.book-overview figure { margin: 2rem auto 0; }
+.book-overview img {
+  display: block;
+  width: min(100%, 64rem);
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  box-shadow: 0 1rem 3rem rgb(17 16 13 / 10%);
+}
 .eyebrow, .toc-label, .edition { color: var(--accent); font-size: .72rem; font-weight: 700; letter-spacing: .22em; }
 .book-hero h1 {
   max-width: 720px;
@@ -93,3 +106,4 @@ code { font-size: .9em; }
   body { background: white; color: black; }
   .book-chapter { break-before: page; }
 }
+

@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "00_Framework/**"
+      - "assets/images/**"
       - ".github/pages/**"
       - ".github/workflows/publish-framework-book.yml"
   workflow_dispatch:
@@ -30,10 +31,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p book-src/_layouts book-src/assets
+          mkdir -p book-src/_layouts book-src/assets/images
           cp .github/pages/book-header.md book-src/index.md
           cp .github/pages/book.html book-src/_layouts/book.html
           cp .github/pages/book.css book-src/assets/book.css
+          cp assets/images/overview.png book-src/assets/images/overview.png
 
           while IFS='|' read -r anchor file; do
             printf '\n<section class="book-chapter" id="%s" markdown="1">\n' "$anchor" >> book-src/index.md
@@ -89,3 +91,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
