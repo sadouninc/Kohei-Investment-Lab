@@ -1,7 +1,7 @@
 # AI
 
 > **Version 1.0**  
-> Kohei Investment Lab
+> Sado Investment Lab
 
 ---
 
@@ -247,7 +247,7 @@ AIというテーマだけで投資判断を行わず、実際に利益へ結び
 
 ---
 
-## Kohei Investment Lab メモ
+## Sado Investment Lab メモ
 
 私はAI企業だから投資するわけではない。
 
@@ -284,4 +284,4 @@ AIという変化によって、
 
 という順番で投資対象を探す。
 
-これがKohei Investment Labの基本的な考え方である。
+これがSado Investment Labの基本的な考え方である。

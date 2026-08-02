@@ -1,4 +1,4 @@
-# Kohei Investment Lab
+# Sado Investment Lab
 
 株式投資の思想、判断基準、企業分析、市場観測、投資日記、仮説検証を蓄積する個人研究リポジトリです。
 

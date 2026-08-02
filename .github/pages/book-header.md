@@ -1,6 +1,6 @@
 ---
 layout: book
-title: Kohei Investment Lab
+title: Sado Investment Lab
 description: 市場と企業を理解し、自分自身の投資理論を磨き続けるためのFramework
 ---
 

@@ -1,7 +1,7 @@
 # Investment Rules
 
 > **Version 1.0**  
-> Kohei Investment Lab
+> Sado Investment Lab
 
 ---
 

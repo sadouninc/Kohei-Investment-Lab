@@ -1,7 +1,7 @@
 # Company Template
 
 > **Version 1.0**  
-> Kohei Investment Lab
+> Sado Investment Lab
 
 ---
 
@@ -221,7 +221,7 @@
 
 ---
 
-## 16. Kohei Score
+## 16. Sado Score
 
 | 項目 | 点数 |
 |---|---:|

@@ -1,7 +1,7 @@
 # Investment Philosophy
 
 > **Version 2.0**  
-> Kohei Investment Lab
+> Sado Investment Lab
 
 ---
 
@@ -330,7 +330,7 @@
 
 ---
 
-## 12. Kohei Investment Labの目的
+## 12. Sado Investment Labの目的
 
 この研究所の目的は、投資手法を固定化することではない。
 

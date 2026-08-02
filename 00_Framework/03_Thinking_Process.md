@@ -1,7 +1,7 @@
 # Thinking Process
 
 > Version 0.1  
-> Kohei Investment Lab
+> Sado Investment Lab
 
 投資判断を一貫した手順で行うための思考プロセスです。今後の実践と振り返りを通じて更新します。
 

@@ -1,6 +1,6 @@
 # Templates
 
-Kohei Investment Labで分析と記録の形式を統一するためのテンプレートです。
+Sado Investment Labで分析と記録の形式を統一するためのテンプレートです。
 
 ## Files
 

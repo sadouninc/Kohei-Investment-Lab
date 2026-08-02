@@ -1,7 +1,7 @@
 # Evaluation Framework
 
 > **Version 1.0**  
-> Kohei Investment Lab
+> Sado Investment Lab
 
 ---
 
@@ -218,7 +218,7 @@ SS-Growthや将来PERを補助的に使用する。
 
 ---
 
-## Kohei Score
+## Sado Score
 
 企業評価は100点満点で行う。
 
@@ -234,7 +234,7 @@ SS-Growthや将来PERを補助的に使用する。
 
 投資判断は、次の4つを組み合わせて行う。
 
-- Kohei Score
+- Sado Score
 - 市場期待
 - 株価水準
 - 資金配分

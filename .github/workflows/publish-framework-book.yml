@@ -65,7 +65,7 @@ jobs:
           path.write_text(text, encoding="utf-8")
           PY
 
-          printf '\n<p class="book-end">Kohei Investment Lab — Framework</p>\n' >> book-src/index.md
+          printf '\n<p class="book-end">Sado Investment Lab — Framework</p>\n' >> book-src/index.md
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
