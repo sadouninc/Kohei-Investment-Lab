@@ -50,6 +50,21 @@ jobs:
           metrics|00_Framework/08_Original_Metrics.md
           CHAPTERS
 
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("book-src/index.md")
+          text = path.read_text(encoding="utf-8")
+          text = re.sub(
+              r"```math\s*\n(.*?)\n```",
+              lambda match: "\n$\n" + match.group(1).strip() + "\n$\n",
+              text,
+              flags=re.DOTALL,
+          )
+          path.write_text(text, encoding="utf-8")
+          PY
+
           printf '\n<p class="book-end">Kohei Investment Lab — Framework</p>\n' >> book-src/index.md
 
       - name: Configure Pages
