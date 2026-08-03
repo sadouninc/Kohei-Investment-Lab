@@ -1,0 +1,79 @@
+name: Publish Sado Investment Lab
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "00_Framework/**"
+      - "02_Themes/**"
+      - "03_Companies/**"
+      - "08_Trade_Analysis/**"
+      - "assets/images/**"
+      - ".github/pages/**"
+      - ".github/workflows/publish-site.yml"
+  pull_request:
+    paths:
+      - "00_Framework/**"
+      - "02_Themes/**"
+      - "03_Companies/**"
+      - "08_Trade_Analysis/**"
+      - "assets/images/**"
+      - ".github/pages/**"
+      - ".github/workflows/publish-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare site
+        run: python3 .github/pages/build_site.py
+
+      - name: Verify generated routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f site-src/index.md
+          test -f site-src/framework/index.md
+          test -f site-src/themes/index.md
+          test -f site-src/companies/index.md
+          test -f site-src/companies/semiconductor/4063-shinetsu/index.md
+          grep -q "4063-shinetsu" site-src/companies/index.md
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./site-src
+          destination: ./_site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+

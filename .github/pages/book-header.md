@@ -1,7 +1,8 @@
 ---
-layout: book
-title: Sado Investment Lab
+layout: site
+title: Framework Web Edition
 description: 市場と企業を理解し、自分自身の投資理論を磨き続けるためのFramework
+permalink: /framework/
 ---
 
 <header class="book-hero">
@@ -10,14 +11,6 @@ description: 市場と企業を理解し、自分自身の投資理論を磨き�
   <p class="lead">市場を理解し、企業を理解し、自分自身の投資理論を磨き続けるためのFramework。</p>
   <p class="edition">Framework Web Edition</p>
 </header>
-
-<section class="book-overview" aria-labelledby="mission-title">
-  <h2 id="mission-title">Mission</h2>
-  <p>Sado Investment Lab は、企業の本質的な価値と市場評価のギャップを見つけ、そのギャップが解消される過程を投資利益につなげることを目指します。</p>
-  <figure>
-    <img src="{{ '/assets/images/overview.png' | relative_url }}" alt="Sado Investment Lab Overview">
-  </figure>
-</section>
 
 <nav class="book-toc" aria-label="目次">
   <p class="toc-label">CONTENTS</p>
@@ -34,4 +27,5 @@ description: 市場と企業を理解し、自分自身の投資理論を磨き�
 </nav>
 
 <p class="reading-note">このWeb書籍は、リポジトリ内の各Framework文書から自動生成されています。</p>
+
 
