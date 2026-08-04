@@ -41,6 +41,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Test Trade Journal mapping
+        run: python3 -m unittest discover -s .github/pages -p "test_*.py"
+
       - name: Prepare site
         run: python3 .github/pages/build_site.py
 
