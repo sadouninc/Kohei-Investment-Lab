@@ -183,6 +183,50 @@ def journal_sections(text: str) -> list[tuple[str, str]]:
     return sections
 
 
+def first_section(text: str, *headings: str) -> str:
+    """Return the first matching level-three section in priority order."""
+    sections = dict(journal_sections(text))
+    for heading in headings:
+        content = sections.get(heading)
+        if content:
+            return content
+    return ""
+
+
+def nested_sections(text: str, *headings: str) -> list[str]:
+    """Collect content only from matching level-four headings."""
+    results: list[str] = []
+    for heading in headings:
+        pattern = re.compile(
+            rf"^#### {re.escape(heading)}\s*$\n(.*?)(?=^#### |^### |\Z)",
+            re.MULTILINE | re.DOTALL,
+        )
+        results.extend(match.group(1).strip() for match in pattern.finditer(text))
+    return [result for result in results if result]
+
+
+def nested_sections_with_parent(text: str, heading: str) -> list[str]:
+    """Preserve the parent topic when reading a legacy nested section."""
+    results: list[str] = []
+    for parent, content in journal_sections(text):
+        nested = nested_sections(content, heading)
+        if nested:
+            results.append(f"### {parent}\n\n" + "\n\n".join(nested))
+    return results
+
+
+def promote_headings(text: str) -> str:
+    """Move nested source headings up one level for the published section."""
+    return re.sub(r"^####(#?) ", lambda match: "###" + match.group(1) + " ", text, flags=re.MULTILINE)
+
+
+def render_journal_section(title: str, content: str, *, required: bool = False) -> str:
+    if not content and not required:
+        return ""
+    body = content or "未記録"
+    return f"---\n\n## {title}\n\n{body}\n\n"
+
+
 def discover_journal_entries() -> list[JournalEntry]:
     entries: list[JournalEntry] = []
     for source in sorted((ROOT / "01_Portfolio" / "Transactions").glob("*.md")):
@@ -201,12 +245,14 @@ def discover_journal_entries() -> list[JournalEntry]:
 
 
 def trade_rows_for_day(entry: JournalEntry) -> dict[str, list[str]]:
+    grouped = {"Buy": [], "Sell": []}
+    if not entry.source.exists():
+        return grouped
     source = entry.source.read_text(encoding="utf-8")
     rows = [
         line for line in source.splitlines()
         if line.startswith(f"| {entry.day.isoformat()} |")
     ]
-    grouped = {"Buy": [], "Sell": []}
     for row in rows:
         cells = [cell.strip() for cell in row.strip("|").split("|")]
         if len(cells) < 7:
@@ -220,24 +266,35 @@ def trade_rows_for_day(entry: JournalEntry) -> dict[str, list[str]]:
 
 
 def build_journal_page(entry: JournalEntry) -> str:
-    sections = journal_sections(entry.content)
-    market = section_content(entry.content, "市場環境")
-    recognition = subsection_content(market, "解釈") if market else ""
-    market_facts = subsection_content(market, "事実") if market else ""
-    reflection = section_content(entry.content, "総括")
-    pending = [
-        f"### {title}\n\n{content}"
-        for title, content in sections if "未約定" in content
-    ]
-    ideas = [
-        f"### {title}\n\n{content}"
-        for title, content in sections if "#### 仮説" in content
-    ]
-    lessons = [
-        subsection_content(content, "改善")
-        for _, content in sections if subsection_content(content, "改善")
-    ]
-    trades = trade_rows_for_day(entry)
+    market = first_section(entry.content, "Market", "市場環境")
+    recognition = first_section(entry.content, "Market Recognition", "市場認識")
+    if not recognition:
+        recognition = subsection_content(market, "解釈")
+    market_facts = subsection_content(market, "事実")
+    if market_facts:
+        market = market_facts
+
+    trades = first_section(entry.content, "Today's Trades", "本日の取引", "売買履歴")
+    if trades:
+        trades = promote_headings(trades)
+    else:
+        grouped = trade_rows_for_day(entry)
+        trade_parts: list[str] = []
+        if grouped["Buy"]:
+            trade_parts.append("### Buy\n\n" + "\n".join(grouped["Buy"]))
+        if grouped["Sell"]:
+            trade_parts.append("### Sell\n\n" + "\n".join(grouped["Sell"]))
+        trades = "\n\n".join(trade_parts)
+
+    ideas = first_section(entry.content, "Investment Ideas", "投資アイデア")
+    if not ideas:
+        ideas = "\n\n".join(nested_sections_with_parent(entry.content, "仮説"))
+    reflection = first_section(entry.content, "Reflection", "振り返り", "総括")
+    lessons = first_section(entry.content, "Lessons Learned", "改善点")
+    if not lessons:
+        lessons = "\n\n".join(nested_sections_with_parent(entry.content, "改善"))
+    next_scenario = first_section(entry.content, "Next Scenario", "翌日のシナリオ")
+
     url = f"/trade-journal/{entry.day:%Y/%m}/{entry.day.isoformat()}/"
     page = front_matter(
         f"Trade Journal — {entry.day.isoformat()}",
@@ -248,29 +305,14 @@ def build_journal_page(entry: JournalEntry) -> str:
         '<p class="breadcrumb"><a href="{{ \'/trade-journal/\' | relative_url }}">'
         f"Trade Journal</a> / {entry.day:%Y / %m} / {entry.day.isoformat()}</p>\n\n"
         f"# Trade Journal — {entry.day.isoformat()}\n\n"
-        "## Market\n\n"
-        f"{market_facts or market or '市場概況は記録されていません。'}\n\n"
-        "---\n\n"
-        "## Market Recognition\n\n"
-        f"{recognition or '市場認識は記録されていません。'}\n\n"
-        "---\n\n"
-        "## Today's Trades\n\n"
-        "### Buy\n\n"
-        f"{chr(10).join(trades['Buy']) or '買い取引は記録されていません。'}\n\n"
-        "### Sell\n\n"
-        f"{chr(10).join(trades['Sell']) or '売り取引は記録されていません。'}\n\n"
-        "### Pending Orders\n\n"
-        f"{chr(10).join(pending) or '未約定注文は記録されていません。'}\n\n"
-        "---\n\n"
-        "## Investment Ideas\n\n"
-        f"{chr(10).join(ideas) or '投資アイデアは記録されていません。'}\n\n"
-        "---\n\n"
-        "## Reflection\n\n"
-        f"{reflection or '反省・総括は記録されていません。'}\n\n"
-        "---\n\n"
-        "## Lessons Learned\n\n"
-        f"{chr(10).join(lessons) or '改善点は記録されていません。'}\n\n"
-        '<details class="source-journal">\n'
+        + render_journal_section("Market", market, required=True)
+        + render_journal_section("Market Recognition", recognition, required=True)
+        + render_journal_section("Today's Trades", trades, required=True)
+        + render_journal_section("Investment Ideas", promote_headings(ideas))
+        + render_journal_section("Reflection", reflection, required=True)
+        + render_journal_section("Lessons Learned", lessons)
+        + render_journal_section("Next Scenario", next_scenario)
+        + '<details class="source-journal">\n'
         "<summary>元の投資日誌を表示</summary>\n\n"
         f"{entry.content}\n\n"
         "</details>\n"
