@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 import shutil
+from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 
@@ -19,6 +21,20 @@ FRAMEWORK_CHAPTERS = [
     ("lessons", ROOT / "00_Framework" / "07_Lessons_Learned.md"),
     ("metrics", ROOT / "00_Framework" / "08_Original_Metrics.md"),
 ]
+
+JOURNAL_HEADING = re.compile(r"^## (\d{4}-\d{2}-\d{2})\s*$", re.MULTILINE)
+MONTH_NAMES = {
+    1: "January", 2: "February", 3: "March", 4: "April",
+    5: "May", 6: "June", 7: "July", 8: "August",
+    9: "September", 10: "October", 11: "November", 12: "December",
+}
+
+
+@dataclass(frozen=True)
+class JournalEntry:
+    day: date
+    content: str
+    source: Path
 
 
 def front_matter(title: str, description: str, permalink: str) -> str:
@@ -139,6 +155,164 @@ def build_trade_analysis_landing() -> None:
     write(SITE / "trade-analysis" / "index.md", page)
 
 
+def section_content(text: str, heading: str, level: int = 3) -> str:
+    marker = "#" * level
+    pattern = re.compile(
+        rf"^{marker} {re.escape(heading)}\s*$\n(.*?)(?=^{'#' * level} |\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(text)
+    return match.group(1).strip() if match else ""
+
+
+def subsection_content(text: str, heading: str) -> str:
+    pattern = re.compile(
+        rf"^#### {re.escape(heading)}\s*$\n(.*?)(?=^#### |^### |\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(text)
+    return match.group(1).strip() if match else ""
+
+
+def journal_sections(text: str) -> list[tuple[str, str]]:
+    matches = list(re.finditer(r"^### (.+?)\s*$", text, re.MULTILINE))
+    sections: list[tuple[str, str]] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections.append((match.group(1).strip(), text[match.end():end].strip()))
+    return sections
+
+
+def discover_journal_entries() -> list[JournalEntry]:
+    entries: list[JournalEntry] = []
+    for source in sorted((ROOT / "01_Portfolio" / "Transactions").glob("*.md")):
+        text = source.read_text(encoding="utf-8")
+        matches = list(JOURNAL_HEADING.finditer(text))
+        for index, match in enumerate(matches):
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+            entries.append(
+                JournalEntry(
+                    day=date.fromisoformat(match.group(1)),
+                    content=text[match.end():end].strip(),
+                    source=source,
+                )
+            )
+    return sorted(entries, key=lambda entry: entry.day, reverse=True)
+
+
+def trade_rows_for_day(entry: JournalEntry) -> dict[str, list[str]]:
+    source = entry.source.read_text(encoding="utf-8")
+    rows = [
+        line for line in source.splitlines()
+        if line.startswith(f"| {entry.day.isoformat()} |")
+    ]
+    grouped = {"Buy": [], "Sell": []}
+    for row in rows:
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        if len(cells) < 7:
+            continue
+        item = f"- **{cells[1]}** — {cells[2]}、{cells[3]}、{cells[4]}（{cells[5]}）"
+        if "買い" in cells[2] and "返済買い" not in cells[2]:
+            grouped["Buy"].append(item)
+        else:
+            grouped["Sell"].append(item)
+    return grouped
+
+
+def build_journal_page(entry: JournalEntry) -> str:
+    sections = journal_sections(entry.content)
+    market = section_content(entry.content, "市場環境")
+    recognition = subsection_content(market, "解釈") if market else ""
+    market_facts = subsection_content(market, "事実") if market else ""
+    reflection = section_content(entry.content, "総括")
+    pending = [
+        f"### {title}\n\n{content}"
+        for title, content in sections if "未約定" in content
+    ]
+    ideas = [
+        f"### {title}\n\n{content}"
+        for title, content in sections if "#### 仮説" in content
+    ]
+    lessons = [
+        subsection_content(content, "改善")
+        for _, content in sections if subsection_content(content, "改善")
+    ]
+    trades = trade_rows_for_day(entry)
+    url = f"/trade-journal/{entry.day:%Y/%m}/{entry.day.isoformat()}/"
+    page = front_matter(
+        f"Trade Journal — {entry.day.isoformat()}",
+        f"{entry.day.isoformat()}の市場認識、売買、反省、改善",
+        url,
+    )
+    page += (
+        '<p class="breadcrumb"><a href="{{ \'/trade-journal/\' | relative_url }}">'
+        f"Trade Journal</a> / {entry.day:%Y / %m} / {entry.day.isoformat()}</p>\n\n"
+        f"# Trade Journal — {entry.day.isoformat()}\n\n"
+        "## Market\n\n"
+        f"{market_facts or market or '市場概況は記録されていません。'}\n\n"
+        "---\n\n"
+        "## Market Recognition\n\n"
+        f"{recognition or '市場認識は記録されていません。'}\n\n"
+        "---\n\n"
+        "## Today's Trades\n\n"
+        "### Buy\n\n"
+        f"{chr(10).join(trades['Buy']) or '買い取引は記録されていません。'}\n\n"
+        "### Sell\n\n"
+        f"{chr(10).join(trades['Sell']) or '売り取引は記録されていません。'}\n\n"
+        "### Pending Orders\n\n"
+        f"{chr(10).join(pending) or '未約定注文は記録されていません。'}\n\n"
+        "---\n\n"
+        "## Investment Ideas\n\n"
+        f"{chr(10).join(ideas) or '投資アイデアは記録されていません。'}\n\n"
+        "---\n\n"
+        "## Reflection\n\n"
+        f"{reflection or '反省・総括は記録されていません。'}\n\n"
+        "---\n\n"
+        "## Lessons Learned\n\n"
+        f"{chr(10).join(lessons) or '改善点は記録されていません。'}\n\n"
+        '<details class="source-journal">\n'
+        "<summary>元の投資日誌を表示</summary>\n\n"
+        f"{entry.content}\n\n"
+        "</details>\n"
+    )
+    return page
+
+
+def build_trade_journal() -> None:
+    entries = discover_journal_entries()
+    groups: dict[int, dict[int, list[JournalEntry]]] = {}
+    for entry in entries:
+        groups.setdefault(entry.day.year, {}).setdefault(entry.day.month, []).append(entry)
+        output = SITE / "trade-journal" / f"{entry.day:%Y}" / f"{entry.day:%m}"
+        write(output / entry.day.isoformat() / "index.md", build_journal_page(entry))
+
+    index = front_matter(
+        "Trade Journal",
+        "市場認識、投資判断、売買、反省、改善を時系列で振り返る",
+        "/trade-journal/",
+    )
+    index += (
+        "# Trade Journal\n\n"
+        "思考から改善までを一続きの研究記録として公開します。"
+        "日誌は `01_Portfolio/Transactions/` の日付見出しから自動生成されます。\n"
+    )
+    for year, months in sorted(groups.items(), reverse=True):
+        index += f"\n## {year}\n"
+        for month, month_entries in sorted(months.items(), reverse=True):
+            index += f"\n### {MONTH_NAMES[month]}\n\n<div class=\"content-grid\">\n"
+            for entry in month_entries:
+                url = f"/trade-journal/{entry.day:%Y/%m}/{entry.day.isoformat()}/"
+                index += (
+                    f'<a class="content-card" href="{{{{ \'{url}\' | relative_url }}}}">'
+                    f"<strong>{entry.day.isoformat()}</strong>"
+                    f"<span>{entry.source.name}</span></a>\n"
+                )
+            index += "</div>\n"
+    if not entries:
+        index += "\n公開中の投資日誌はありません。\n"
+    write(SITE / "trade-journal" / "index.md", index)
+
+
 def main() -> None:
     if SITE.exists():
         shutil.rmtree(SITE)
@@ -153,9 +327,9 @@ def main() -> None:
     build_framework()
     build_themes()
     build_companies()
+    build_trade_journal()
     build_trade_analysis_landing()
 
 
 if __name__ == "__main__":
     main()
-

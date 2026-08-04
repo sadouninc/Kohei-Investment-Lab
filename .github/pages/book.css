@@ -106,6 +106,14 @@ a { color: var(--accent); text-underline-offset: .2em; }
 .nav-card span, .content-card span { color: var(--muted); font-size: .86rem; line-height: 1.7; }
 .content-card { min-height: 7rem; }
 .breadcrumb { margin: 2rem 0 4rem; color: var(--muted); font-size: .82rem; }
+.source-journal {
+  margin-top: 3rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.source-journal summary { cursor: pointer; font-weight: 600; }
 .book-chapter { padding: 10vh 0 4vh; border-top: 1px solid var(--line); }
 .book-chapter > h1:first-of-type {
   margin: 0 0 2.5rem;
@@ -150,5 +158,4 @@ code { font-size: .9em; }
   body { background: white; color: black; }
   .book-chapter { break-before: page; }
 }
-
 

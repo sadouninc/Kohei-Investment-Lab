@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "00_Framework/**"
+      - "01_Portfolio/Transactions/**"
       - "02_Themes/**"
       - "03_Companies/**"
       - "08_Trade_Analysis/**"
@@ -15,6 +16,7 @@ on:
   pull_request:
     paths:
       - "00_Framework/**"
+      - "01_Portfolio/Transactions/**"
       - "02_Themes/**"
       - "03_Companies/**"
       - "08_Trade_Analysis/**"
@@ -50,8 +52,13 @@ jobs:
           test -f site-src/framework/index.md
           test -f site-src/themes/index.md
           test -f site-src/companies/index.md
+          test -f site-src/trade-journal/index.md
+          test -f site-src/trade-journal/2026/08/2026-08-03/index.md
+          test -f site-src/trade-journal/2026/08/2026-08-04/index.md
           test -f site-src/companies/semiconductor/4063-shinetsu/index.md
           grep -q "4063-shinetsu" site-src/companies/index.md
+          grep -q "2026-08-03" site-src/trade-journal/index.md
+          grep -q "2026-08-04" site-src/trade-journal/index.md
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -76,4 +83,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-
