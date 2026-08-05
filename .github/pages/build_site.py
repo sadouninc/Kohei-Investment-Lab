@@ -166,11 +166,84 @@ def analysis_table(title: str, rows: list[dict]) -> str:
     return "\n".join(output) + "\n\n"
 
 
+def indexed(value: float | None) -> str:
+    return "—" if value is None else f"{value:,.1f}"
+
+
+def period_table(title: str, rows: list[dict], label: str) -> str:
+    output = [
+        f"## {title}", "",
+        f"| {label} | 取引数 | 結果指数 | 勝率 | PF | 平均保有日数 |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    output.extend(
+        f"| {row['label']} | {row['trade_count']} | "
+        f"{indexed(row['indexed_net_result'])} | "
+        f"{metric(row['win_rate'], percent=True)} | "
+        f"{metric(row['profit_factor'])} | {row['average_holding_days']:.1f} |"
+        for row in rows
+    )
+    return "\n".join(output) + "\n\n"
+
+
+def bar_chart(title: str, rows: list[dict], key: str, *, percent: bool = False) -> str:
+    values = [abs(float(row.get(key) or 0)) for row in rows]
+    maximum = max(values, default=0) or 1
+    chart = [f'<div class="analysis-chart" aria-label="{title}">', f"<h3>{title}</h3>"]
+    for row in rows:
+        value = float(row.get(key) or 0)
+        width = abs(value) / maximum * 100
+        display = f"{value * 100:.1f}%" if percent else f"{value:,.1f}"
+        direction = "negative" if value < 0 else "positive"
+        chart.append(
+            f'<div class="chart-row"><span>{row["label"]}</span>'
+            f'<i class="{direction}" style="width:{width:.2f}%"></i>'
+            f"<strong>{display}</strong></div>"
+        )
+    chart.append("</div>")
+    return "\n".join(chart) + "\n\n"
+
+
+def line_chart(title: str, points: list[dict], keys: tuple[str, str]) -> str:
+    if not points:
+        return ""
+    values = [float(point[key] or 0) for point in points for key in keys]
+    low, high = min(values), max(values)
+    span = high - low or 1
+    width, height, padding = 720, 240, 18
+
+    def coordinates(key: str) -> str:
+        result = []
+        denominator = max(len(points) - 1, 1)
+        for index, point in enumerate(points):
+            x = padding + index / denominator * (width - padding * 2)
+            y = padding + (high - float(point[key] or 0)) / span * (
+                height - padding * 2
+            )
+            result.append(f"{x:.1f},{y:.1f}")
+        return " ".join(result)
+
+    labels = f"{points[0]['month']} 〜 {points[-1]['month']}"
+    return (
+        f'<figure class="line-chart"><figcaption>{title}</figcaption>'
+        f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{title}">'
+        f'<polyline class="line-primary" points="{coordinates(keys[0])}" />'
+        f'<polyline class="line-secondary" points="{coordinates(keys[1])}" />'
+        "</svg>"
+        f"<small>{labels}　<span>累積結果指数</span> / <span>ドローダウン指数</span></small>"
+        "</figure>\n\n"
+    )
+
+
 def build_trade_analysis_landing() -> None:
     source = PUBLIC_TRADE_DATA if PUBLIC_TRADE_DATA.is_file() else TRADE_DATA_FIXTURE
     payload = json.loads(source.read_text(encoding="utf-8"))
     summary = payload["summary"]
     period = payload["period"]
+    years = payload.get("years", [])
+    months = payload.get("months", [])
+    curve = payload.get("monthly_equity_curve", {"points": []})
+    quality = payload.get("data_quality", {})
     notes = (
         TRADE_IMPROVEMENT_NOTES.read_text(encoding="utf-8")
         if TRADE_IMPROVEMENT_NOTES.is_file() else ""
@@ -205,8 +278,68 @@ def build_trade_analysis_landing() -> None:
         f'<div class="metric-card"><span>平均保有日数</span><strong>{summary["average_holding_days"]:.1f}</strong></div>\n'
         f'<div class="metric-card"><span>最大連勝</span><strong>{summary["max_win_streak"]}</strong></div>\n'
         f'<div class="metric-card"><span>最大連敗</span><strong>{summary["max_loss_streak"]}</strong></div>\n'
+        f'<div class="metric-card"><span>利益取引</span><strong>{summary.get("win_count", "—")}</strong></div>\n'
+        f'<div class="metric-card"><span>損失取引</span><strong>{summary.get("loss_count", "—")}</strong></div>\n'
+        f'<div class="metric-card"><span>総結果指数</span><strong>{indexed(summary.get("indexed_net_result"))}</strong></div>\n'
+        f'<div class="metric-card"><span>最大DD指数</span><strong>{indexed(curve.get("indexed_max_drawdown"))}</strong></div>\n'
         "</div>\n\n"
+        "> 金額に関する指標は、実損益を公開しないため相対指数で表示します。"
+        "100は全期間の1取引あたり絶対損益平均です。\n\n"
+        "### 集計単位\n\n"
+        "一つの取引は、同一銘柄・口座区分・売買方向の建玉がゼロから始まり、"
+        "再びゼロへ戻るまでの **Trade Episode** です。分割買いと部分決済を"
+        "一つの判断として扱い、未決済Episodeは損益統計から除外します。"
+        "保有日数は営業日ではなく暦日です。\n\n"
     )
+    if years:
+        page += period_table("年別パフォーマンス", years, "年")
+        page += bar_chart("年別結果指数", years, "indexed_net_result")
+        page += bar_chart("年別勝率", years, "win_rate", percent=True)
+        page += bar_chart("年別プロフィットファクター", years, "profit_factor")
+    if months:
+        options = "".join(
+            f'<option value="{row["label"]}">{row["label"]}</option>' for row in months
+        )
+        page += (
+            "## 月別パフォーマンス\n\n"
+            '<label class="period-selector">表示月 '
+            f'<select id="month-selector"><option value="all">全期間</option>{options}'
+            "</select></label>\n\n"
+            '<div class="month-table"><table><thead><tr><th>年月</th><th>取引数</th>'
+            "<th>結果指数</th><th>勝率</th><th>PF</th><th>平均保有日数</th>"
+            "</tr></thead><tbody>\n"
+        )
+        for row in months:
+            page += (
+                f'<tr data-month="{row["label"]}"><td>{row["label"]}</td>'
+                f'<td>{row["trade_count"]}</td>'
+                f'<td>{indexed(row["indexed_net_result"])}</td>'
+                f'<td>{metric(row["win_rate"], percent=True)}</td>'
+                f'<td>{metric(row["profit_factor"])}</td>'
+                f'<td>{row["average_holding_days"]:.1f}</td></tr>\n'
+            )
+        page += (
+            "</tbody></table></div>\n\n"
+            "<script>document.addEventListener('DOMContentLoaded',()=>{"
+            "const s=document.getElementById('month-selector');if(!s)return;"
+            "s.addEventListener('change',()=>document.querySelectorAll('[data-month]')"
+            ".forEach(r=>r.hidden=s.value!=='all'&&r.dataset.month!==s.value));});"
+            "</script>\n\n"
+        )
+        page += bar_chart("月別結果指数", months, "indexed_net_result")
+        page += bar_chart("月別勝率推移", months, "win_rate", percent=True)
+        page += bar_chart("月別取引件数", months, "trade_count")
+    if curve.get("points"):
+        page += "## 累積結果・ドローダウン\n\n"
+        page += (
+            "この曲線は、入出金や含み損益を含む証券口座の総資産推移ではなく、"
+            "記録された決済済みTrade Episodeの実現結果を月単位で累積した指数です。\n\n"
+        )
+        page += line_chart(
+            "累積結果指数とドローダウン指数",
+            curve["points"],
+            ("indexed_cumulative_result", "indexed_drawdown"),
+        )
     page += analysis_table("保有期間別", payload["holding_periods"])
     page += analysis_table("エントリー曜日別", payload["entry_weekdays"])
     if payload["exit_weekdays"]:
@@ -240,6 +373,22 @@ def build_trade_analysis_landing() -> None:
         )
     if today_score:
         page += f"\n## Today's Score\n\n{today_score}\n"
+    page += "\n## データ品質\n\n"
+    page += (
+        f"- 集計対象期間: {period.get('start') or '—'} 〜 {period.get('end') or '—'}\n"
+        f"- 最終更新日: {payload.get('updated_date') or '—'}\n"
+        f"- 読み込んだCSV数: {quality.get('source_csv_count') if quality.get('source_csv_count') is not None else '記録なし'}\n"
+        f"- 有効約定レコード数: {quality.get('valid_record_count') if quality.get('valid_record_count') is not None else '記録なし'}\n"
+        f"- 決済済みEpisode数: {quality.get('closed_episode_count') if quality.get('closed_episode_count') is not None else '記録なし'}\n"
+        f"- 未決済Episode数: {quality.get('open_episode_count') if quality.get('open_episode_count') is not None else '記録なし'}\n"
+        f"- 対応不能約定数: {quality.get('unmatched_execution_count') if quality.get('unmatched_execution_count') is not None else '記録なし'}\n"
+        f"- 銘柄名未解決件数: {quality.get('unresolved_security_count') if quality.get('unresolved_security_count') is not None else '記録なし'}\n"
+        f"- 重複除外件数: {quality.get('duplicate_excluded_count') if quality.get('duplicate_excluded_count') is not None else '既存DBには監査値なし'}\n"
+        f"- 対応付け: {quality.get('matching_method') or 'FIFO / Trade Episode'}\n\n"
+        "元CSVの同一約定はfingerprintで重複登録を防止します。既存DBは取り込み時の"
+        "重複スキップ件数を保持していないため、重複除外件数は次回インポート監査の"
+        "改善項目です。株式分割等の調整は元約定を書き換えず、将来の注記マスタで扱います。\n"
+    )
     write(SITE / "trade-analysis" / "index.md", page)
 
 
@@ -463,3 +612,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

@@ -156,6 +156,44 @@ a { color: var(--accent); text-underline-offset: .2em; }
   border-radius: .35rem;
   font-size: .85rem;
 }
+.analysis-chart {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+}
+.analysis-chart h3 { margin-top: 0; }
+.chart-row {
+  display: grid;
+  grid-template-columns: 5rem minmax(2rem, 1fr) 5rem;
+  align-items: center;
+  gap: .6rem;
+  margin: .45rem 0;
+  font-size: .78rem;
+}
+.chart-row i { display: block; min-width: 2px; height: .7rem; background: #557a68; }
+.chart-row i.negative { background: var(--accent); }
+.chart-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+.line-chart {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.line-chart figcaption { margin-bottom: .75rem; font-family: "Noto Serif JP", serif; font-weight: 600; }
+.line-chart svg { display: block; width: 100%; height: auto; }
+.line-chart polyline { fill: none; stroke-width: 3; vector-effect: non-scaling-stroke; }
+.line-chart .line-primary { stroke: #557a68; }
+.line-chart .line-secondary { stroke: var(--accent); }
+.line-chart small { color: var(--muted); }
+.period-selector { display: inline-flex; align-items: center; gap: .6rem; margin: 1rem 0; }
+.period-selector select {
+  padding: .45rem .7rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
 .breadcrumb { margin: 2rem 0 4rem; color: var(--muted); font-size: .82rem; }
 .source-journal {
   margin-top: 3rem;
@@ -210,4 +248,5 @@ code { font-size: .9em; }
   body { background: white; color: black; }
   .book-chapter { break-before: page; }
 }
+
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -141,6 +142,27 @@ class TradeJournalBuildTest(unittest.TestCase):
         self.assertNotIn("日東紡", page)
         self.assertNotIn("JX金属", page)
 
+        for expected in (
+            "全期間",
+            "年別パフォーマンス",
+            "月別パフォーマンス",
+            "累積結果・ドローダウン",
+            "データ品質",
+            "2024",
+            "2025",
+            "2026-07",
+        ):
+            self.assertIn(expected, page)
+
+        fixture = json.loads(
+            build_site.TRADE_DATA_FIXTURE.read_text(encoding="utf-8")
+        )
+        july = next(
+            item for item in fixture["months"] if item["label"] == "2026-07"
+        )
+        self.assertEqual(july["trade_count"], 3)
+        self.assertEqual(july["win_count"], 2)
+
     def test_nittobo_company_report_is_published(self) -> None:
         build_site.build_companies()
         page = (
@@ -164,4 +186,5 @@ class TradeJournalBuildTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
