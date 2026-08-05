@@ -196,6 +196,8 @@ class TradeJournalBuildTest(unittest.TestCase):
 
         for expected in (
             "2026年8月5日 市場動向分析",
+            "https://raw.githubusercontent.com/sadouninc/Kohei-Investment-Lab/main/"
+            "assets/images/market-analysis/2026/"
             "nikkei-daily-decline-factors-2026-08-05.png",
             "主要な下落要因を吹き出しで注釈した市場分析図",
             "## 分析の目的",
