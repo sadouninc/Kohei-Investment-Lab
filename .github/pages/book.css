@@ -203,6 +203,28 @@ a { color: var(--accent); text-underline-offset: .2em; }
   background: var(--card);
 }
 .source-journal summary { cursor: pointer; font-weight: 600; }
+.market-chart {
+  width: min(100vw - 3rem, 96rem);
+  margin: 2rem 50%;
+  transform: translateX(-50%);
+}
+.market-chart a { display: block; }
+.market-chart img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: .6rem;
+  box-shadow: 0 1rem 3rem rgb(17 16 13 / 12%);
+}
+.market-chart figcaption {
+  max-width: 64rem;
+  margin: .8rem auto 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+  text-align: center;
+}
 .book-chapter { padding: 10vh 0 4vh; border-top: 1px solid var(--line); }
 .book-chapter > h1:first-of-type {
   margin: 0 0 2.5rem;
@@ -241,6 +263,7 @@ code { font-size: .9em; }
   .card-grid, .content-grid { grid-template-columns: 1fr; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .nav-card, .content-card { min-height: 0; }
+  .market-chart { width: calc(100vw - 1.5rem); }
   table { display: block; overflow-x: auto; }
 }
 @media print {
