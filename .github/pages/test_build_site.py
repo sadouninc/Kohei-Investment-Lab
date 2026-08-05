@@ -43,7 +43,6 @@ class TradeJournalBuildTest(unittest.TestCase):
             "原油・物流コスト",
         ):
             self.assertIn(expected, page)
-
     def test_2026_08_04_content_is_published_without_false_empty_messages(self) -> None:
         page = self.page("2026-08-04")
 
@@ -61,7 +60,6 @@ class TradeJournalBuildTest(unittest.TestCase):
             "## Next Scenario",
         ):
             self.assertIn(expected, page)
-
         self.assertNotIn("記録されていません", page)
         self.assertNotIn("\n未記録\n", page)
 
@@ -124,6 +122,44 @@ class TradeJournalBuildTest(unittest.TestCase):
         self.assertNotIn("## Investment Ideas", page)
         self.assertNotIn("## Lessons Learned", page)
         self.assertNotIn("## Next Scenario", page)
+
+    def test_trade_analysis_includes_improvement_cycle(self) -> None:
+        build_site.build_trade_analysis_landing()
+        page = (
+            build_site.SITE / "trade-analysis" / "index.md"
+        ).read_text(encoding="utf-8")
+
+        for expected in (
+            "Today's Lesson",
+            "AI先生コメント",
+            "Next Action",
+            "Framework Candidate",
+            "Today's Score",
+            "投資改善サイクル",
+        ):
+            self.assertIn(expected, page)
+        self.assertNotIn("日東紡", page)
+        self.assertNotIn("JX金属", page)
+
+    def test_nittobo_company_report_is_published(self) -> None:
+        build_site.build_companies()
+        page = (
+            build_site.SITE / "companies" / "semiconductor"
+            / "3110-nittobo" / "index.md"
+        ).read_text(encoding="utf-8")
+        index = (
+            build_site.SITE / "companies" / "index.md"
+        ).read_text(encoding="utf-8")
+
+        for expected in (
+            "Sado投資レポート",
+            "Investment Thesis",
+            "Sado投資評価",
+            "投資仮説タイムライン",
+            "96 / 100",
+        ):
+            self.assertIn(expected, page)
+        self.assertIn("3110-nittobo", index)
 
 
 if __name__ == "__main__":

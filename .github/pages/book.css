@@ -123,6 +123,39 @@ a { color: var(--accent); text-underline-offset: .2em; }
 }
 .metric-card span { color: var(--muted); font-size: .75rem; line-height: 1.5; }
 .metric-card strong { font-family: "Noto Serif JP", serif; font-size: 1.4rem; }
+.improvement-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin: 2rem 0;
+  padding: 1rem;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+}
+.improvement-flow span { color: var(--ink); font-weight: 600; }
+.improvement-flow b { color: var(--accent); }
+.insight-panel, .framework-candidate {
+  margin: 2.5rem 0;
+  padding: clamp(1.2rem, 4vw, 2rem);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: .5rem;
+}
+.insight-panel h2, .framework-candidate h2 { margin-top: 0; }
+.teacher-panel { border-left-color: #557a68; }
+.candidate-note {
+  margin-top: 1.5rem;
+  padding: .75rem 1rem;
+  color: var(--muted);
+  background: var(--paper-deep);
+  border-radius: .35rem;
+  font-size: .85rem;
+}
 .breadcrumb { margin: 2rem 0 4rem; color: var(--muted); font-size: .82rem; }
 .source-journal {
   margin-top: 3rem;

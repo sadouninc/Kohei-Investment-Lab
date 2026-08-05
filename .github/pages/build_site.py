@@ -13,6 +13,7 @@ PAGES = ROOT / ".github" / "pages"
 SITE = ROOT / "site-src"
 PUBLIC_TRADE_DATA = ROOT / "data" / "generated" / "public" / "trade-analysis-summary.json"
 TRADE_DATA_FIXTURE = PAGES / "fixtures" / "trade-analysis-summary.json"
+TRADE_IMPROVEMENT_NOTES = ROOT / "08_Trade_Analysis" / "Improvement_Notes.md"
 
 FRAMEWORK_CHAPTERS = [
     ("philosophy", ROOT / "00_Framework" / "01_Investment_Philosophy.md"),
@@ -170,6 +171,15 @@ def build_trade_analysis_landing() -> None:
     payload = json.loads(source.read_text(encoding="utf-8"))
     summary = payload["summary"]
     period = payload["period"]
+    notes = (
+        TRADE_IMPROVEMENT_NOTES.read_text(encoding="utf-8")
+        if TRADE_IMPROVEMENT_NOTES.is_file() else ""
+    )
+    lesson = section_content(notes, "Today's Lesson", level=2)
+    teacher_comment = section_content(notes, "AI先生コメント", level=2)
+    next_action = section_content(notes, "Next Action", level=2)
+    framework_candidate = section_content(notes, "Framework Candidate", level=2)
+    today_score = section_content(notes, "Today's Score", level=2)
     page = front_matter(
         "Trade Analysis",
         "匿名化した集計指標で売買の再現性と改善点を検証する",
@@ -177,8 +187,14 @@ def build_trade_analysis_landing() -> None:
     )
     page += (
         "# Trade Analysis\n\n"
+        "過去の成績を見るだけでなく、分析から学び、次のトレードとFrameworkを改善するためのページです。\n\n"
         "個別の銘柄、価格、数量、損益額を公開せず、集計指標だけで売買を振り返ります。\n\n"
-        f'<p class="dashboard-period">対象期間: {period["start"] or "—"} 〜 '
+        '<div class="improvement-flow" aria-label="投資改善サイクル">'
+        "<span>分析</span><b>→</b><span>学び</span><b>→</b><span>改善</span>"
+        "<b>→</b><span>ルール更新</span><b>→</b><span>次回トレード</span></div>\n\n"
+        + (f'<section class="insight-panel lesson-panel" markdown="1">\n\n'
+           f"## Today's Lesson\n\n{lesson}\n\n</section>\n\n" if lesson else "")
+        + f'<p class="dashboard-period">対象期間: {period["start"] or "—"} 〜 '
         f'{period["end"] or "—"} / 更新: {payload["updated_date"]}</p>\n\n'
         '<div class="metric-grid">\n'
         f'<div class="metric-card"><span>取引数</span><strong>{summary["trade_count"]}</strong></div>\n'
@@ -208,6 +224,22 @@ def build_trade_analysis_landing() -> None:
         f"| 上位5取引除外後PF | {metric(concentration['profit_factor_excluding_top_5_trades'])} |\n\n"
         "> 期待値指数は金額を公開しないための相対指標です。100を中立基準とします。\n"
     )
+    if teacher_comment:
+        page += (
+            '\n<section class="insight-panel teacher-panel" markdown="1">\n\n'
+            f"## AI先生コメント\n\n{teacher_comment}\n\n</section>\n"
+        )
+    if next_action:
+        page += f"\n## Next Action\n\n{next_action}\n"
+    if framework_candidate:
+        page += (
+            '\n<section class="framework-candidate" markdown="1">\n\n'
+            f"## Framework Candidate\n\n{framework_candidate}\n\n"
+            '<p class="candidate-note">「未反映」を確認し、内容を検証してから'
+            'Frameworkへ昇格します。</p>\n\n</section>\n'
+        )
+    if today_score:
+        page += f"\n## Today's Score\n\n{today_score}\n"
     write(SITE / "trade-analysis" / "index.md", page)
 
 

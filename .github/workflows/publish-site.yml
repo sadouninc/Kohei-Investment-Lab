@@ -68,12 +68,17 @@ jobs:
           test -f site-src/trade-journal/2026/08/2026-08-04/index.md
           test -f site-src/trade-journal/2026/08/2026-08-05/index.md
           test -f site-src/companies/semiconductor/4063-shinetsu/index.md
+          test -f site-src/companies/semiconductor/3110-nittobo/index.md
           grep -q "4063-shinetsu" site-src/companies/index.md
+          grep -q "3110-nittobo" site-src/companies/index.md
           grep -q "2026-08-03" site-src/trade-journal/index.md
           grep -q "2026-08-04" site-src/trade-journal/index.md
-          grep -q "2026-08-05" site-src/trade-journal/index.md
           grep -q "期待値指数" site-src/trade-analysis/index.md
+          grep -q "Today's Lesson" site-src/trade-analysis/index.md
+          grep -q "Framework Candidate" site-src/trade-analysis/index.md
           ! grep -Eq "security_(code|name)|net_pnl|gross_pnl|quantity|price" site-src/trade-analysis/index.md
+          ! grep -Eq "日東紡|JX金属|3110|5016" site-src/trade-analysis/index.md
+          grep -q "2026-08-05" site-src/trade-journal/index.md
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
