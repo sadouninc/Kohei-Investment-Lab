@@ -55,6 +55,11 @@ CREATE TABLE IF NOT EXISTS unmatched_executions (
  execution_id INTEGER PRIMARY KEY, unmatched_quantity REAL NOT NULL,
  reason TEXT NOT NULL, FOREIGN KEY(execution_id) REFERENCES executions(id)
 );
+CREATE TABLE IF NOT EXISTS import_audit (
+ id INTEGER PRIMARY KEY, source_file TEXT NOT NULL, imported_at TEXT NOT NULL,
+ source_record_count INTEGER NOT NULL, inserted_count INTEGER NOT NULL,
+ duplicate_count INTEGER NOT NULL, error_count INTEGER NOT NULL
+);
 """
 
 def clean(s: str | None) -> str:
@@ -122,7 +127,7 @@ def main() -> int:
     if not csv_path.is_file():
         ap.error(f"CSVが見つかりません: {csv_path}")
     args.db.parent.mkdir(parents=True, exist_ok=True)
-    inserted = duplicates = 0
+    inserted = duplicates = source_records = 0
     errors: list[str] = []
     try:
         with open_csv(csv_path, args.encoding) as fh, sqlite3.connect(args.db) as db:
@@ -142,6 +147,7 @@ def main() -> int:
             reader = csv.DictReader(fh, fieldnames=header)
             occurrences: dict[str, int] = defaultdict(int)
             for line, row in enumerate(reader, header_line + 1):
+                source_records += 1
                 try:
                     name, code = pick(row, "name"), pick(row, "code")
                     qty, price = number(pick(row, "quantity")), number(pick(row, "price"))
@@ -182,6 +188,20 @@ def main() -> int:
                         raise
             if errors and args.strict:
                 raise ValueError(errors[0])
+            db.execute(
+                """INSERT INTO import_audit
+                   (source_file,imported_at,source_record_count,inserted_count,
+                    duplicate_count,error_count)
+                   VALUES(?,?,?,?,?,?)""",
+                (
+                    csv_path.name,
+                    datetime.now().isoformat(timespec="seconds"),
+                    source_records,
+                    inserted,
+                    duplicates,
+                    len(errors),
+                ),
+            )
         print(f"登録: {inserted}件 / 重複スキップ: {duplicates}件 / エラー: {len(errors)}件")
         for msg in errors[:10]:
             print(msg, file=sys.stderr)
@@ -192,4 +212,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 

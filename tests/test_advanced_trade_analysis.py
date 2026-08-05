@@ -106,7 +106,7 @@ class AdvancedTradeAnalysisTest(unittest.TestCase):
             self.assertEqual(analysis["overall"]["trade_count"], 2)
             self.assertEqual(analysis["overall"]["win_count"], 2)
             self.assertEqual(analysis["overall"]["max_win_streak"], 2)
-            self.assertEqual(len(analysis["holding_periods"]), 7)
+            self.assertEqual(len(analysis["holding_periods"]), 8)
 
             payload = public_module.build_public_payload(rows, "2026-08-05")
             public_module.assert_public(payload)
@@ -115,6 +115,43 @@ class AdvancedTradeAnalysisTest(unittest.TestCase):
                 self.assertNotIn(private_value, serialized)
             self.assertEqual(payload["summary"]["trade_count"], 2)
             self.assertIn("indexed_expectancy", payload["summary"])
+
+    def test_period_breakdowns_reconcile_with_all_time(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "trades.sqlite"
+            self.create_database(path)
+            with closing(sqlite3.connect(path)) as db:
+                episodes_module.persist(db, episodes_module.build_episodes(db))
+                rows = reports_module.load_closed_episodes(db)
+            analysis = reports_module.build_analysis(rows)
+            overall = analysis["overall"]
+
+            for key in ("by_year", "by_month", "by_account_type", "holding_periods"):
+                self.assertEqual(
+                    sum(item["trade_count"] for item in analysis[key]),
+                    overall["trade_count"],
+                    key,
+                )
+            for key in ("by_year", "by_month"):
+                self.assertAlmostEqual(
+                    sum(item["net_pnl"] for item in analysis[key]),
+                    overall["net_pnl"],
+                    msg=key,
+                )
+            self.assertEqual(
+                overall["win_count"]
+                + overall["loss_count"]
+                + overall["breakeven_count"],
+                overall["trade_count"],
+            )
+
+    def test_empty_dataset_builds_public_payload(self):
+        payload = public_module.build_public_payload([], "2026-08-05")
+        public_module.assert_public(payload)
+        self.assertEqual(payload["summary"]["trade_count"], 0)
+        self.assertEqual(payload["years"], [])
+        self.assertEqual(payload["months"], [])
+        self.assertEqual(payload["monthly_equity_curve"]["points"], [])
 
     def test_private_outputs_remain_under_generated_directory(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -132,3 +169,4 @@ class AdvancedTradeAnalysisTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

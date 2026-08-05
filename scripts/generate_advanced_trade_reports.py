@@ -13,9 +13,10 @@ import statistics
 import sys
 
 HOLDING_BUCKETS = (
-    ("0日", 0, 0), ("1〜2日", 1, 2), ("3〜5日", 3, 5),
+    ("当日", 0, 0), ("1日", 1, 1), ("2〜5日", 2, 5),
     ("6〜10日", 6, 10), ("11〜20日", 11, 20),
-    ("21〜60日", 21, 60), ("61日以上", 61, None),
+    ("21〜60日", 21, 60), ("61〜120日", 61, 120),
+    ("121日以上", 121, None),
 )
 WEEKDAYS = ("月", "火", "水", "木", "金", "土", "日")
 
@@ -122,6 +123,50 @@ def concentration(rows: list[dict]) -> dict:
     return output
 
 
+def equity_curve(rows: list[dict]) -> dict:
+    """Build a realized-P&L curve in close-date order.
+
+    This is not total account equity because deposits, withdrawals and
+    unrealized P&L are outside the execution database.
+    """
+    cumulative = Decimal(0)
+    high_water = Decimal(0)
+    peak_date: str | None = None
+    max_drawdown = Decimal(0)
+    max_drawdown_start: str | None = None
+    max_drawdown_end: str | None = None
+    points: list[dict] = []
+    for row in sorted(rows, key=lambda item: (item["close_date"], item["id"])):
+        cumulative += d(row["net_pnl"])
+        if cumulative >= high_water:
+            high_water = cumulative
+            peak_date = row["close_date"]
+        drawdown = cumulative - high_water
+        if drawdown < max_drawdown:
+            max_drawdown = drawdown
+            max_drawdown_start = peak_date
+            max_drawdown_end = row["close_date"]
+        points.append({
+            "date": row["close_date"],
+            "cumulative_pnl": float(cumulative),
+            "high_water_pnl": float(high_water),
+            "drawdown": float(drawdown),
+        })
+    duration = None
+    if max_drawdown_start and max_drawdown_end:
+        duration = (
+            date.fromisoformat(max_drawdown_end)
+            - date.fromisoformat(max_drawdown_start)
+        ).days
+    return {
+        "points": points,
+        "max_drawdown": float(max_drawdown),
+        "max_drawdown_start": max_drawdown_start,
+        "max_drawdown_end": max_drawdown_end,
+        "max_drawdown_days": duration,
+    }
+
+
 def load_closed_episodes(db: sqlite3.Connection) -> list[dict]:
     db.row_factory = sqlite3.Row
     exists = db.execute(
@@ -150,6 +195,7 @@ def build_analysis(rows: list[dict]) -> dict:
         "by_security": grouped(
             rows, lambda row: row["security_code"] or row["security_name"]
         ),
+        "by_year": grouped(rows, lambda row: row["close_date"][:4]),
         "by_month": grouped(rows, lambda row: row["close_date"][:7]),
         "by_entry_weekday": grouped(
             rows, lambda row: WEEKDAYS[date.fromisoformat(row["open_date"]).weekday()]
@@ -159,6 +205,7 @@ def build_analysis(rows: list[dict]) -> dict:
         ),
         "holding_periods": holding_periods(rows),
         "concentration": concentration(rows),
+        "equity_curve": equity_curve(rows),
     }
 
 
@@ -224,6 +271,8 @@ def write_reports(output: Path, rows: list[dict], analysis: dict) -> None:
         *markdown_table(analysis["by_account_type"]),
         "", "## 銘柄別", "",
         *markdown_table(analysis["by_security"]),
+        "", "## 年別", "",
+        *markdown_table(analysis["by_year"]),
         "", "## 月別", "",
         *markdown_table(analysis["by_month"]),
         "", "## 保有期間", "",
@@ -273,3 +322,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

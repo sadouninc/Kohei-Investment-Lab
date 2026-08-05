@@ -76,6 +76,10 @@ jobs:
           grep -q "期待値指数" site-src/trade-analysis/index.md
           grep -q "Today's Lesson" site-src/trade-analysis/index.md
           grep -q "Framework Candidate" site-src/trade-analysis/index.md
+          grep -q "年別パフォーマンス" site-src/trade-analysis/index.md
+          grep -q "月別パフォーマンス" site-src/trade-analysis/index.md
+          grep -q "累積結果・ドローダウン" site-src/trade-analysis/index.md
+          grep -q "データ品質" site-src/trade-analysis/index.md
           ! grep -Eq "security_(code|name)|net_pnl|gross_pnl|quantity|price" site-src/trade-analysis/index.md
           ! grep -Eq "日東紡|JX金属|3110|5016" site-src/trade-analysis/index.md
           grep -q "2026-08-05" site-src/trade-journal/index.md
@@ -103,3 +107,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
