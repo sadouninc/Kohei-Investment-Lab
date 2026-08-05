@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "updated_date": "2026-08-05",
+  "period": {"start": "2026-07-01", "end": "2026-07-31"},
+  "summary": {
+    "trade_count": 24,
+    "win_rate": 0.583333,
+    "profit_factor": 1.72,
+    "payoff_ratio": 1.31,
+    "indexed_expectancy": 119.4,
+    "average_holding_days": 6.8,
+    "median_holding_days": 3.0,
+    "max_win_streak": 4,
+    "max_loss_streak": 3
+  },
+  "holding_periods": [
+    {"label": "0日", "trade_count": 4, "win_rate": 0.5, "profit_factor": 1.18, "payoff_ratio": 1.18, "average_holding_days": 0.0},
+    {"label": "1〜2日", "trade_count": 7, "win_rate": 0.571429, "profit_factor": 1.42, "payoff_ratio": 1.07, "average_holding_days": 1.6},
+    {"label": "3〜5日", "trade_count": 5, "win_rate": 0.6, "profit_factor": 1.85, "payoff_ratio": 1.23, "average_holding_days": 4.0},
+    {"label": "6〜10日", "trade_count": 3, "win_rate": 0.666667, "profit_factor": 2.1, "payoff_ratio": 1.05, "average_holding_days": 8.0},
+    {"label": "11〜20日", "trade_count": 3, "win_rate": 0.666667, "profit_factor": 2.48, "payoff_ratio": 1.24, "average_holding_days": 15.0},
+    {"label": "21〜60日", "trade_count": 2, "win_rate": 0.5, "profit_factor": 1.36, "payoff_ratio": 1.36, "average_holding_days": 32.0},
+    {"label": "61日以上", "trade_count": 0, "win_rate": 0.0, "profit_factor": null, "payoff_ratio": null, "average_holding_days": 0.0}
+  ],
+  "entry_weekdays": [
+    {"label": "月", "trade_count": 5, "win_rate": 0.6, "profit_factor": 1.8, "payoff_ratio": 1.2, "average_holding_days": 5.2},
+    {"label": "火", "trade_count": 6, "win_rate": 0.666667, "profit_factor": 2.05, "payoff_ratio": 1.03, "average_holding_days": 6.5},
+    {"label": "水", "trade_count": 5, "win_rate": 0.4, "profit_factor": 0.92, "payoff_ratio": 1.38, "average_holding_days": 7.0},
+    {"label": "木", "trade_count": 4, "win_rate": 0.75, "profit_factor": 2.32, "payoff_ratio": 0.77, "average_holding_days": 8.2},
+    {"label": "金", "trade_count": 4, "win_rate": 0.5, "profit_factor": 1.41, "payoff_ratio": 1.41, "average_holding_days": 7.4}
+  ],
+  "exit_weekdays": [],
+  "position_sides": [
+    {"label": "LONG", "trade_count": 20, "win_rate": 0.6, "profit_factor": 1.81, "payoff_ratio": 1.21, "average_holding_days": 7.3},
+    {"label": "SHORT", "trade_count": 4, "win_rate": 0.5, "profit_factor": 1.28, "payoff_ratio": 1.28, "average_holding_days": 4.3}
+  ],
+  "account_types": [
+    {"label": "CASH", "trade_count": 9, "win_rate": 0.666667, "profit_factor": 2.04, "payoff_ratio": 1.02, "average_holding_days": 13.2},
+    {"label": "MARGIN", "trade_count": 15, "win_rate": 0.533333, "profit_factor": 1.49, "payoff_ratio": 1.4, "average_holding_days": 3.0}
+  ],
+  "concentration": {
+    "top_1_security_contribution": 0.31,
+    "profit_factor_excluding_top_1_trades": 1.44,
+    "top_3_security_contribution": 0.64,
+    "profit_factor_excluding_top_3_trades": 1.19,
+    "top_5_security_contribution": 0.82,
+    "profit_factor_excluding_top_5_trades": 1.05
+  }
+}

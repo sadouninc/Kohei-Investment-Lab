@@ -1,17 +1,42 @@
 # Trade Analysis
 
-## 目的
+SBI証券の約定履歴から、売買の再現性と改善点を検証するための分析基盤です。
 
-SBI証券の実売買データを再現可能な形で取り込み、売買傾向、保有期間、勝ち負けの
-パターンからSado Frameworkを検証・改善するための基盤です。
+## プライバシー方針
 
-## 非公開データ方針
+次の情報は公開リポジトリへコミットしません。
 
-元CSV、SQLite、個別取引、損益・資産額を含む生成レポートは公開GitHubへ登録しません。
-CSVは`data/private/`、DBは`data/database/`、生成物は`data/generated/`に置きます。
-各ディレクトリは`.gitignore`で保護されています。
+- SBI証券から取得した元CSV
+- SQLiteデータベース
+- 個別約定、銘柄名、証券コード
+- 実際の価格、数量、損益額、資産額
+- 口座を特定できる情報
+- 個人用の生成レポート
 
-## 実行順
+これらは `.gitignore` で保護された `data/private/`、`data/database/`、
+`data/generated/` の中だけで扱います。公開用JSONには、匿名化した集計値と
+金額を含まない指数だけを出力します。
+
+## 分析単位
+
+### 約定
+
+証券会社CSVの1行に相当する最小単位です。
+
+### 決済ロット
+
+FIFOで一つの買いと売りを対応付けた単位です。
+
+### Trade Episode
+
+同一銘柄・口座区分・売買方向について、建玉がゼロの状態から始まり、
+再びゼロへ戻るまでを一つの取引として集約します。分割買い、部分決済、
+買い増しを一つの投資判断として検証するための標準単位です。
+
+現物と信用、LONGとSHORTは混在させません。未決済のエピソードは
+`OPEN` として保存しますが、確定損益の統計からは除外します。
+
+## 実行手順
 
 リポジトリのルートで次の順に実行します。
 
@@ -23,27 +48,56 @@ python scripts/import_sbi_executions.py `
 python scripts/build_closed_trades.py `
   --database data/database/investment_lab.sqlite
 
+python scripts/build_trade_episodes.py `
+  --database data/database/investment_lab.sqlite
+
 python scripts/generate_trade_reports.py `
   --database data/database/investment_lab.sqlite `
   --output data/generated
+
+python scripts/generate_advanced_trade_reports.py `
+  --database data/database/investment_lab.sqlite `
+  --output data/generated
+
+python scripts/generate_public_trade_dashboard.py `
+  --database data/database/investment_lab.sqlite `
+  --output data/generated/public/trade-analysis-summary.json
 ```
 
-macOS/LinuxではPowerShellの継続記号を`\`に置き換えてください。各スクリプトの詳細は
-`--help`で確認できます。
+各スクリプトの引数は `--help` で確認できます。
 
-## 損益とFIFO
+## 生成物
 
-確定損益はSBI記載の信用決済損益を優先します。FIFO計算は建玉指定、株式分割、諸経費を
-完全には再現できないため、保有期間と売買傾向の推定に利用します。取得期間より前の
-建玉や期間末の未決済建玉は、未対応約定としてDBへ記録されます。
-
-## 出力
-
-`data/generated/`へ以下を生成します。
+個人用の `data/generated/` には、次のファイルを生成します。
 
 - `Trading_Statistics.md`
+- `Advanced_Trading_Statistics.md`
 - `closed_trades.csv`
+- `trade_episodes.csv`
 - `by_security.csv`
+- `public/trade-analysis-summary.json`
 
-これらは個人データを含むためコミットしないでください。
+すべてGit管理対象外です。公開サイトのビルドでは、ローカルに匿名集計JSONが
+存在すればそれを利用し、GitHub Actionsでは匿名のテスト用集計を利用します。
 
+## 公開ダッシュボード
+
+`/trade-analysis/` では、次の集計だけを公開します。
+
+- 取引数、勝率、PF、ペイオフレシオ
+- 金額を除いた期待値指数
+- 平均・中央値の保有日数
+- 最大連勝・連敗
+- 保有期間別、曜日別、LONG/SHORT別、現物/信用別の集計
+- 利益集中度と上位取引除外後PF
+
+個別の売買を逆算できる情報は公開しません。
+
+## 計算上の注意
+
+既存DBとの互換性のためSQLiteの金額列は `REAL` を維持しています。Trade
+Episodeの計算時は文字列表現から `Decimal` へ変換し、浮動小数点誤差の影響を
+抑えています。実データでは、証券会社が示す確定損益との照合も継続します。
+
+この仕組みは投資判断を自動化するものではありません。結果だけでなく、
+どの保有期間・方向・市場局面で判断の再現性が高いかを検証するために使います。

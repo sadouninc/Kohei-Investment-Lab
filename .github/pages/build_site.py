@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from dataclasses import dataclass
@@ -10,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PAGES = ROOT / ".github" / "pages"
 SITE = ROOT / "site-src"
+PUBLIC_TRADE_DATA = ROOT / "data" / "generated" / "public" / "trade-analysis-summary.json"
+TRADE_DATA_FIXTURE = PAGES / "fixtures" / "trade-analysis-summary.json"
 
 FRAMEWORK_CHAPTERS = [
     ("philosophy", ROOT / "00_Framework" / "01_Investment_Philosophy.md"),
@@ -141,16 +144,69 @@ def build_companies() -> None:
     write(SITE / "companies" / "index.md", index)
 
 
+def metric(value: float | None, *, percent: bool = False) -> str:
+    if value is None:
+        return "—"
+    return f"{value * 100:.1f}%" if percent else f"{value:.2f}"
+
+
+def analysis_table(title: str, rows: list[dict]) -> str:
+    output = [
+        f"## {title}", "",
+        "| 区分 | 取引数 | 勝率 | PF | 平均保有日数 |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    output.extend(
+        f"| {row['label']} | {row['trade_count']} | "
+        f"{metric(row['win_rate'], percent=True)} | "
+        f"{metric(row['profit_factor'])} | {row['average_holding_days']:.1f} |"
+        for row in rows
+    )
+    return "\n".join(output) + "\n\n"
+
+
 def build_trade_analysis_landing() -> None:
+    source = PUBLIC_TRADE_DATA if PUBLIC_TRADE_DATA.is_file() else TRADE_DATA_FIXTURE
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    summary = payload["summary"]
+    period = payload["period"]
     page = front_matter(
         "Trade Analysis",
-        "公開可能な売買検証を蓄積するための入口",
+        "匿名化した集計指標で売買の再現性と改善点を検証する",
         "/trade-analysis/",
     )
     page += (
         "# Trade Analysis\n\n"
-        "売買記録や検証結果のうち、公開可能な文書を将来掲載するためのページです。\n\n"
-        "> 現在、公開対象の文書はありません。\n"
+        "個別の銘柄、価格、数量、損益額を公開せず、集計指標だけで売買を振り返ります。\n\n"
+        f'<p class="dashboard-period">対象期間: {period["start"] or "—"} 〜 '
+        f'{period["end"] or "—"} / 更新: {payload["updated_date"]}</p>\n\n'
+        '<div class="metric-grid">\n'
+        f'<div class="metric-card"><span>取引数</span><strong>{summary["trade_count"]}</strong></div>\n'
+        f'<div class="metric-card"><span>勝率</span><strong>{metric(summary["win_rate"], percent=True)}</strong></div>\n'
+        f'<div class="metric-card"><span>PF</span><strong>{metric(summary["profit_factor"])}</strong></div>\n'
+        f'<div class="metric-card"><span>ペイオフレシオ</span><strong>{metric(summary["payoff_ratio"])}</strong></div>\n'
+        f'<div class="metric-card"><span>期待値指数</span><strong>{summary["indexed_expectancy"]:.1f}</strong></div>\n'
+        f'<div class="metric-card"><span>平均保有日数</span><strong>{summary["average_holding_days"]:.1f}</strong></div>\n'
+        f'<div class="metric-card"><span>最大連勝</span><strong>{summary["max_win_streak"]}</strong></div>\n'
+        f'<div class="metric-card"><span>最大連敗</span><strong>{summary["max_loss_streak"]}</strong></div>\n'
+        "</div>\n\n"
+    )
+    page += analysis_table("保有期間別", payload["holding_periods"])
+    page += analysis_table("エントリー曜日別", payload["entry_weekdays"])
+    if payload["exit_weekdays"]:
+        page += analysis_table("決済曜日別", payload["exit_weekdays"])
+    page += analysis_table("売買方向別", payload["position_sides"])
+    page += analysis_table("現物・信用別", payload["account_types"])
+    concentration = payload["concentration"]
+    page += (
+        "## 集中度\n\n| 指標 | 値 |\n|---|---:|\n"
+        f"| 上位1銘柄の利益寄与率 | {metric(concentration['top_1_security_contribution'], percent=True)} |\n"
+        f"| 上位3銘柄の利益寄与率 | {metric(concentration['top_3_security_contribution'], percent=True)} |\n"
+        f"| 上位5銘柄の利益寄与率 | {metric(concentration['top_5_security_contribution'], percent=True)} |\n"
+        f"| 上位1取引除外後PF | {metric(concentration['profit_factor_excluding_top_1_trades'])} |\n"
+        f"| 上位3取引除外後PF | {metric(concentration['profit_factor_excluding_top_3_trades'])} |\n"
+        f"| 上位5取引除外後PF | {metric(concentration['profit_factor_excluding_top_5_trades'])} |\n\n"
+        "> 期待値指数は金額を公開しないための相対指標です。100を中立基準とします。\n"
     )
     write(SITE / "trade-analysis" / "index.md", page)
 

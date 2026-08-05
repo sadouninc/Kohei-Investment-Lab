@@ -105,6 +105,24 @@ a { color: var(--accent); text-underline-offset: .2em; }
 .nav-card strong, .content-card strong { font-family: "Noto Serif JP", serif; font-size: 1.15rem; }
 .nav-card span, .content-card span { color: var(--muted); font-size: .86rem; line-height: 1.7; }
 .content-card { min-height: 7rem; }
+.dashboard-period { color: var(--muted); font-size: .9rem; }
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .8rem;
+  margin: 2rem 0 4rem;
+}
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: .45rem;
+}
+.metric-card span { color: var(--muted); font-size: .75rem; line-height: 1.5; }
+.metric-card strong { font-family: "Noto Serif JP", serif; font-size: 1.4rem; }
 .breadcrumb { margin: 2rem 0 4rem; color: var(--muted); font-size: .82rem; }
 .source-journal {
   margin-top: 3rem;
@@ -150,6 +168,7 @@ code { font-size: .9em; }
   .book-toc ol { columns: 1; }
   .book-hero { min-height: 72vh; }
   .card-grid, .content-grid { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .nav-card, .content-card { min-height: 0; }
   table { display: block; overflow-x: auto; }
 }
