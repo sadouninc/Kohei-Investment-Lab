@@ -65,6 +65,24 @@ class TradeJournalBuildTest(unittest.TestCase):
         self.assertNotIn("記録されていません", page)
         self.assertNotIn("\n未記録\n", page)
 
+    def test_2026_08_05_trade_and_review_are_published(self) -> None:
+        page = self.page("2026-08-05")
+
+        for expected in (
+            "## Market",
+            "## Market Recognition",
+            "## Today's Trades",
+            "JX金属",
+            "4,285円",
+            "## Investment Ideas",
+            "日東紡",
+            "Glass Core",
+            "## Reflection",
+            "## Lessons Learned",
+            "## Next Scenario",
+        ):
+            self.assertIn(expected, page)
+
     def test_japanese_headings_remain_supported(self) -> None:
         entry = build_site.JournalEntry(
             day=date(2026, 8, 5),
