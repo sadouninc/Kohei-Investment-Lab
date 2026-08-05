@@ -93,6 +93,18 @@ python scripts/generate_public_trade_dashboard.py `
 
 個別の売買を逆算できる情報は公開しません。
 
+## 投資改善メモ
+
+`Improvement_Notes.md` は、集計結果を次の投資判断へつなげるための公開用Markdownです。
+
+- `Today's Lesson`: その日の学び
+- `AI先生コメント`: 判断過程の評価と改善案
+- `Next Action`: 次回の売買で確認する行動
+- `Framework Candidate`: Frameworkへ昇格を検討する教訓
+- `Today's Score`: 成績ではなく判断過程の自己評価
+
+Pages生成時にTrade Analysisへ組み込まれます。公開ダッシュボードのプライバシー方針に合わせ、銘柄名、証券コード、価格、数量、実損益額は記載しません。
+
 ## 計算上の注意
 
 既存DBとの互換性のためSQLiteの金額列は `REAL` を維持しています。Trade
