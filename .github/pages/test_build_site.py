@@ -184,6 +184,27 @@ class TradeJournalBuildTest(unittest.TestCase):
         self.assertIn("3110-nittobo", index)
 
 
+    def test_market_analysis_page_and_index_are_published(self) -> None:
+        build_site.build_market_analysis()
+        page = (
+            build_site.SITE / "market-analysis" / "2026"
+            / "2026-08-05" / "index.md"
+        ).read_text(encoding="utf-8")
+        index = (
+            build_site.SITE / "market-analysis" / "index.md"
+        ).read_text(encoding="utf-8")
+
+        for expected in (
+            "2026年8月5日 市場動向分析",
+            "nikkei-daily-decline-factors-2026-08-05.png",
+            "主要な下落要因を吹き出しで注釈した市場分析図",
+            "## 分析の目的",
+            "## 注意事項",
+        ):
+            self.assertIn(expected, page)
+        self.assertIn("/market-analysis/2026/2026-08-05/", index)
+
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -9,6 +9,7 @@ on:
       - "01_Portfolio/Transactions/**"
       - "02_Themes/**"
       - "03_Companies/**"
+      - "04_Market/**"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
@@ -21,6 +22,7 @@ on:
       - "01_Portfolio/Transactions/**"
       - "02_Themes/**"
       - "03_Companies/**"
+      - "04_Market/**"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
@@ -62,6 +64,8 @@ jobs:
           test -f site-src/framework/index.md
           test -f site-src/themes/index.md
           test -f site-src/companies/index.md
+          test -f site-src/market-analysis/index.md
+          test -f site-src/market-analysis/2026/2026-08-05/index.md
           test -f site-src/trade-journal/index.md
           test -f site-src/trade-analysis/index.md
           test -f site-src/trade-journal/2026/08/2026-08-03/index.md
@@ -71,6 +75,9 @@ jobs:
           test -f site-src/companies/semiconductor/3110-nittobo/index.md
           grep -q "4063-shinetsu" site-src/companies/index.md
           grep -q "3110-nittobo" site-src/companies/index.md
+          grep -q "2026-08-05" site-src/market-analysis/index.md
+          grep -q "nikkei-daily-decline-factors-2026-08-05.png" site-src/market-analysis/2026/2026-08-05/index.md
+          test -f site-src/assets/images/market-analysis/2026/nikkei-daily-decline-factors-2026-08-05.png
           grep -q "2026-08-03" site-src/trade-journal/index.md
           grep -q "2026-08-04" site-src/trade-journal/index.md
           grep -q "期待値指数" site-src/trade-analysis/index.md

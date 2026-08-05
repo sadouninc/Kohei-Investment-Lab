@@ -145,6 +145,46 @@ def build_companies() -> None:
     write(SITE / "companies" / "index.md", index)
 
 
+def build_market_analysis() -> None:
+    sources = sorted(
+        (ROOT / "04_Market" / "Analysis").glob("*/*.md"),
+        reverse=True,
+    )
+    cards: list[str] = []
+    for source in sources:
+        year = source.parent.name
+        page_slug = slug(source.stem)
+        title = title_from_markdown(source)
+        url = f"/market-analysis/{year}/{page_slug}/"
+        cards.append(
+            f'<a class="content-card" href="{{{{ \'{url}\' | relative_url }}}}">'
+            f"<strong>{title}</strong>"
+            "<span>日経平均 日足チャート：上昇相場中の主な下げ要因分析</span></a>"
+        )
+        page = front_matter(title, "市場変動の背景と投資判断を記録する", url)
+        page += (
+            '<p class="breadcrumb"><a href="{{ \'/market-analysis/\' | relative_url }}">'
+            f"Market Analysis</a> / {year} / {title}</p>\n\n"
+        )
+        page += source.read_text(encoding="utf-8")
+        write(SITE / "market-analysis" / year / page_slug / "index.md", page)
+
+    index = front_matter(
+        "Market Analysis",
+        "チャートと公開情報から市場変動の背景を整理する",
+        "/market-analysis/",
+    )
+    index += (
+        "# Market Analysis\n\n"
+        "市場の値動きと背景を記録し、一時的な需給調整と構造的な変化を分けて考えます。\n\n"
+    )
+    if cards:
+        index += '<div class="content-grid">\n' + "\n".join(cards) + "\n</div>\n"
+    else:
+        index += "公開中の市場分析はありません。\n"
+    write(SITE / "market-analysis" / "index.md", index)
+
+
 def metric(value: float | None, *, percent: bool = False) -> str:
     if value is None:
         return "—"
@@ -600,12 +640,17 @@ def main() -> None:
 
     shutil.copy2(PAGES / "site.html", SITE / "_layouts" / "site.html")
     shutil.copy2(PAGES / "book.css", SITE / "assets" / "book.css")
-    shutil.copy2(ROOT / "assets" / "images" / "overview.png", SITE / "assets" / "images" / "overview.png")
+    shutil.copytree(
+        ROOT / "assets" / "images",
+        SITE / "assets" / "images",
+        dirs_exist_ok=True,
+    )
     shutil.copy2(PAGES / "home.md", SITE / "index.md")
 
     build_framework()
     build_themes()
     build_companies()
+    build_market_analysis()
     build_trade_journal()
     build_trade_analysis_landing()
 

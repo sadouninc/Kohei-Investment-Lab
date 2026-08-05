@@ -36,6 +36,10 @@ permalink: /
       <strong>Companies</strong>
       <span>企業品質と現在の投資機会を分けて分析する</span>
     </a>
+    <a class="nav-card" href="{{ '/market-analysis/' | relative_url }}">
+      <strong>Market Analysis</strong>
+      <span>チャートと公開情報から市場変動の背景を整理する</span>
+    </a>
     <a class="nav-card" href="{{ '/trade-journal/' | relative_url }}">
       <strong>Trade Journal</strong>
       <span>市場認識・投資判断・売買・反省・改善を時系列で読む</span>
