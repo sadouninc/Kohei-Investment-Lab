@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "universes": [
+    {
+      "id": "ai-semiconductor-40",
+      "name": "AI半導体エコシステム40",
+      "layer": "industry",
+      "file": "ai-semiconductor-40.json",
+      "status": "active"
+    },
+    {
+      "id": "ai-ecosystem-v1",
+      "name": "AIエコシステム",
+      "layer": "ecosystem",
+      "file": "ai-ecosystem-v1.json",
+      "status": "design"
+    }
+  ]
+}

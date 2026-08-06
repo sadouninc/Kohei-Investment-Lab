@@ -1,0 +1,74 @@
+{
+  "id": "ai-ecosystem-v1",
+  "name": "AIエコシステム",
+  "version": 1,
+  "layer": "ecosystem",
+  "benchmark": "TOPIX",
+  "category_order": [
+    "AI Semiconductor & Materials",
+    "Semiconductor Equipment",
+    "Electronic Components",
+    "Optical Communication / Datacenter Infrastructure",
+    "AI Software / SI",
+    "Robotics / Factory Automation",
+    "Edge AI / AI Camera",
+    "Power / Cooling Infrastructure"
+  ],
+  "symbols": [
+    {"code":"3110","name":"日東紡","category":"AI Semiconductor & Materials","roles":["半導体材料","先端パッケージ"],"rationale":"AI半導体向け高性能ガラス材料の需要波及を観察する。"},
+    {"code":"4063","name":"信越化学工業","category":"AI Semiconductor & Materials","roles":["シリコンウエハ","半導体材料"],"rationale":"先端半導体の基礎材料と長期需要を観察する。"},
+    {"code":"3436","name":"SUMCO","category":"AI Semiconductor & Materials","roles":["シリコンウエハ"],"rationale":"ウエハ需給と半導体投資サイクルを観察する。"},
+    {"code":"4004","name":"レゾナック・ホールディングス","category":"AI Semiconductor & Materials","roles":["半導体材料","先端パッケージ"],"rationale":"後工程材料と先端パッケージ需要を観察する。"},
+    {"code":"5016","name":"JX金属","category":"AI Semiconductor & Materials","roles":["スパッタリングターゲット","半導体材料"],"rationale":"微細化を支える高純度材料の需要を観察する。"},
+    {"code":"4186","name":"東京応化工業","category":"AI Semiconductor & Materials","roles":["フォトレジスト","半導体材料"],"rationale":"先端露光材料への需要波及を観察する。"},
+
+    {"code":"8035","name":"東京エレクトロン","category":"Semiconductor Equipment","roles":["前工程装置"],"rationale":"AI半導体の設備投資サイクルを観察する。"},
+    {"code":"7735","name":"SCREENホールディングス","category":"Semiconductor Equipment","roles":["洗浄装置"],"rationale":"微細化に伴う洗浄工程需要を観察する。"},
+    {"code":"6146","name":"ディスコ","category":"Semiconductor Equipment","roles":["切断","研削"],"rationale":"高性能半導体と先端パッケージの加工需要を観察する。"},
+    {"code":"6525","name":"KOKUSAI ELECTRIC","category":"Semiconductor Equipment","roles":["成膜装置"],"rationale":"メモリ・ロジック向け成膜投資を観察する。"},
+    {"code":"6857","name":"アドバンテスト","category":"Semiconductor Equipment","roles":["半導体テスト"],"rationale":"AI半導体の高性能化に伴う検査需要を観察する。"},
+    {"code":"6920","name":"レーザーテック","category":"Semiconductor Equipment","roles":["マスク検査"],"rationale":"先端プロセスの検査需要と設備投資を観察する。"},
+
+    {"code":"6981","name":"村田製作所","category":"Electronic Components","roles":["受動部品","電源周辺"],"rationale":"AIサーバとエッジ機器の高機能化による部品需要を観察する。"},
+    {"code":"6762","name":"TDK","category":"Electronic Components","roles":["受動部品","センサー","電源"],"rationale":"データセンターとエッジAI双方への需要波及を観察する。"},
+    {"code":"6976","name":"太陽誘電","category":"Electronic Components","roles":["積層セラミックコンデンサ"],"rationale":"高性能機器の部品搭載量増加を観察する。"},
+    {"code":"6963","name":"ローム","category":"Electronic Components","roles":["パワー半導体","電子部品"],"rationale":"電力変換効率と機器電源需要を観察する。"},
+    {"code":"4062","name":"イビデン","category":"Electronic Components","roles":["ICパッケージ基板"],"rationale":"AI半導体向け高性能基板需要を観察する。"},
+    {"code":"7911","name":"TOPPANホールディングス","category":"Electronic Components","roles":["フォトマスク","半導体パッケージ"],"rationale":"先端半導体の製造・実装材料需要を観察する。"},
+
+    {"code":"5803","name":"フジクラ","category":"Optical Communication / Datacenter Infrastructure","roles":["光ファイバー","データセンター配線"],"rationale":"AIデータセンター内外の高速通信需要を観察する。"},
+    {"code":"5801","name":"古河電気工業","category":"Optical Communication / Datacenter Infrastructure","roles":["光ファイバー","光部品"],"rationale":"通信容量増加に伴う光インフラ需要を観察する。"},
+    {"code":"6702","name":"富士通","category":"Optical Communication / Datacenter Infrastructure","roles":["サーバ","ネットワーク","SI"],"rationale":"計算基盤と企業向けAI実装への資金波及を観察する。"},
+    {"code":"6701","name":"NEC","category":"Optical Communication / Datacenter Infrastructure","roles":["ネットワーク","サーバ","SI"],"rationale":"通信基盤とAI社会実装への需要波及を観察する。"},
+    {"code":"3778","name":"さくらインターネット","category":"Optical Communication / Datacenter Infrastructure","roles":["クラウド","GPU基盤"],"rationale":"国内AI計算資源とデータセンター需要を観察する。"},
+    {"code":"3774","name":"インターネットイニシアティブ","category":"Optical Communication / Datacenter Infrastructure","roles":["ネットワーク","クラウド","データセンター"],"rationale":"企業のクラウド・ネットワーク需要を観察する。"},
+
+    {"code":"4307","name":"野村総合研究所","category":"AI Software / SI","roles":["SI","業務AI"],"rationale":"企業のAI導入と業務変革需要を観察する。"},
+    {"code":"9719","name":"SCSK","category":"AI Software / SI","roles":["SI","クラウド"],"rationale":"企業IT投資とAI実装の広がりを観察する。"},
+    {"code":"2327","name":"日鉄ソリューションズ","category":"AI Software / SI","roles":["SI","製造業DX"],"rationale":"産業向けAI・DX投資を観察する。"},
+    {"code":"4684","name":"オービック","category":"AI Software / SI","roles":["業務ソフトウェア","クラウド"],"rationale":"業務ソフトウェアへのAI実装と継続収益を観察する。"},
+    {"code":"3697","name":"SHIFT","category":"AI Software / SI","roles":["ソフトウェア品質","DX"],"rationale":"ソフトウェア開発・品質需要とAI活用の変化を観察する。"},
+    {"code":"3993","name":"PKSHA Technology","category":"AI Software / SI","roles":["AIソフトウェア","自然言語処理"],"rationale":"国内企業のAIソフトウェア導入需要を観察する。"},
+
+    {"code":"6954","name":"ファナック","category":"Robotics / Factory Automation","roles":["産業用ロボット","FA"],"rationale":"AIと自動化による製造設備投資を観察する。"},
+    {"code":"6506","name":"安川電機","category":"Robotics / Factory Automation","roles":["産業用ロボット","モーション制御"],"rationale":"ロボット需要と設備投資サイクルを観察する。"},
+    {"code":"6645","name":"オムロン","category":"Robotics / Factory Automation","roles":["制御機器","FA"],"rationale":"製造現場の知能化・自動化需要を観察する。"},
+    {"code":"6383","name":"ダイフク","category":"Robotics / Factory Automation","roles":["物流自動化","搬送"],"rationale":"データセンター周辺を含む物流・工場自動化需要を観察する。"},
+    {"code":"6324","name":"ハーモニック・ドライブ・システムズ","category":"Robotics / Factory Automation","roles":["精密減速機","ロボット部品"],"rationale":"ロボット生産と部品需要の先行変化を観察する。"},
+    {"code":"6268","name":"ナブテスコ","category":"Robotics / Factory Automation","roles":["精密減速機","自動化部品"],"rationale":"産業用ロボットの生産サイクルを観察する。"},
+
+    {"code":"6758","name":"ソニーグループ","category":"Edge AI / AI Camera","roles":["イメージセンサー","エッジAI"],"rationale":"画像認識と端末側AIの需要を観察する。"},
+    {"code":"6723","name":"ルネサスエレクトロニクス","category":"Edge AI / AI Camera","roles":["組み込み半導体","車載AI"],"rationale":"自動車・産業機器へのエッジAI実装を観察する。"},
+    {"code":"6861","name":"キーエンス","category":"Edge AI / AI Camera","roles":["画像センサー","工場自動化"],"rationale":"製造現場の認識・検査高度化を観察する。"},
+    {"code":"7731","name":"ニコン","category":"Edge AI / AI Camera","roles":["画像機器","精密光学"],"rationale":"光学技術と画像処理の産業利用を観察する。"},
+    {"code":"7751","name":"キヤノン","category":"Edge AI / AI Camera","roles":["画像機器","ネットワークカメラ"],"rationale":"映像解析・監視領域へのAI実装を観察する。"},
+    {"code":"3652","name":"ディジタルメディアプロフェッショナル","category":"Edge AI / AI Camera","roles":["エッジAI","画像処理IP"],"rationale":"端末内推論と画像処理需要を観察する。"},
+
+    {"code":"6622","name":"ダイヘン","category":"Power / Cooling Infrastructure","roles":["変圧器","電力機器"],"rationale":"データセンター増設に伴う受配電需要を観察する。"},
+    {"code":"6503","name":"三菱電機","category":"Power / Cooling Infrastructure","roles":["電力機器","FA"],"rationale":"送配電・電力制御とAIインフラ需要を観察する。"},
+    {"code":"6504","name":"富士電機","category":"Power / Cooling Infrastructure","roles":["パワー半導体","電源設備"],"rationale":"高効率電力変換とデータセンター電源需要を観察する。"},
+    {"code":"5802","name":"住友電気工業","category":"Power / Cooling Infrastructure","roles":["電線","送配電","光通信"],"rationale":"電力網と通信網の両面でAIインフラ需要を観察する。"},
+    {"code":"1969","name":"高砂熱学工業","category":"Power / Cooling Infrastructure","roles":["空調","データセンター冷却"],"rationale":"高密度データセンターの冷却・空調需要を観察する。"},
+    {"code":"1979","name":"大氣社","category":"Power / Cooling Infrastructure","roles":["空調","環境設備"],"rationale":"データセンターと製造施設の空調設備需要を観察する。"}
+  ]
+}
