@@ -645,6 +645,11 @@ def main() -> None:
         SITE / "assets" / "images",
         dirs_exist_ok=True,
     )
+    shutil.copy2(
+        ROOT / "assets" / "images" / "market-analysis" / "2026"
+        / "nikkei-daily-decline-factors-2026-08-05.png",
+        SITE / "assets" / "images" / "nikkei-daily-decline-factors-2026-08-05.png",
+    )
     shutil.copy2(PAGES / "home.md", SITE / "index.md")
 
     build_framework()
