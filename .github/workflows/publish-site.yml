@@ -10,12 +10,14 @@ on:
       - "02_Themes/**"
       - "03_Companies/**"
       - "04_Market/**"
+      - "data/market/**"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
       - "assets/images/**"
       - ".github/pages/**"
       - ".github/workflows/publish-site.yml"
+      - ".github/workflows/update-market-phase.yml"
   pull_request:
     paths:
       - "00_Framework/**"
@@ -23,12 +25,14 @@ on:
       - "02_Themes/**"
       - "03_Companies/**"
       - "04_Market/**"
+      - "data/market/**"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
       - "assets/images/**"
       - ".github/pages/**"
       - ".github/workflows/publish-site.yml"
+      - ".github/workflows/update-market-phase.yml"
   workflow_dispatch:
 
 permissions:
@@ -47,10 +51,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Generate market phase report
+        run: python3 -m scripts.market_phase.pipeline
+
       - name: Test Trade Journal mapping
         run: python3 -m unittest discover -s .github/pages -p "test_*.py"
 
-      - name: Test trade analysis pipeline
+      - name: Test analysis pipelines
         run: python3 -m unittest discover -s tests -p "test_*.py"
 
       - name: Prepare site
@@ -66,6 +73,7 @@ jobs:
           test -f site-src/companies/index.md
           test -f site-src/market-analysis/index.md
           test -f site-src/market-analysis/2026/2026-08-05/index.md
+          test -f site-src/research/market-phase/ai-semiconductor/index.md
           test -f site-src/trade-journal/index.md
           test -f site-src/trade-analysis/index.md
           test -f site-src/trade-journal/2026/08/2026-08-03/index.md
@@ -76,6 +84,8 @@ jobs:
           grep -q "4063-shinetsu" site-src/companies/index.md
           grep -q "3110-nittobo" site-src/companies/index.md
           grep -q "2026-08-05" site-src/market-analysis/index.md
+          grep -q "Sado Market Phase Analyzer" site-src/research/market-phase/ai-semiconductor/index.md
+          grep -q "phase-data" site-src/research/market-phase/ai-semiconductor/index.md
           test -f assets/images/market-analysis/2026/nikkei-daily-decline-factors-2026-08-05.jpg
           grep -q "data:image/jpeg;base64," site-src/market-analysis/2026/2026-08-05/index.md
           grep -q "2026-08-03" site-src/trade-journal/index.md

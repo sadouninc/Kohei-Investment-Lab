@@ -40,6 +40,10 @@ permalink: /
       <strong>Market Analysis</strong>
       <span>チャートと公開情報から市場変動の背景を整理する</span>
     </a>
+    <a class="nav-card" href="{{ '/research/market-phase/ai-semiconductor/' | relative_url }}">
+      <strong>Market Phase</strong>
+      <span>AI半導体40銘柄の相関・自動クラスタ・先行遅行候補を調べる</span>
+    </a>
     <a class="nav-card" href="{{ '/trade-journal/' | relative_url }}">
       <strong>Trade Journal</strong>
       <span>市場認識・投資判断・売買・反省・改善を時系列で読む</span>

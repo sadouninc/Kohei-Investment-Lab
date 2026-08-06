@@ -17,6 +17,9 @@ TRADE_DATA_FIXTURE = PAGES / "fixtures" / "trade-analysis-summary.json"
 TRADE_IMPROVEMENT_NOTES = ROOT / "08_Trade_Analysis" / "Improvement_Notes.md"
 MARKET_CHART_IMAGE = ROOT / "assets" / "images" / "market-analysis" / "2026" / "nikkei-daily-decline-factors-2026-08-05.jpg"
 MARKET_CHART_PLACEHOLDER = "{{ MARKET_CHART_DATA_URI }}"
+MARKET_PHASE_DATA = (
+    ROOT / "data" / "generated" / "public" / "market-phase" / "ai-semiconductor.json"
+)
 
 FRAMEWORK_CHAPTERS = [
     ("philosophy", ROOT / "00_Framework" / "01_Investment_Philosophy.md"),
@@ -193,6 +196,81 @@ def build_market_analysis() -> None:
     else:
         index += "公開中の市場分析はありません。\n"
     write(SITE / "market-analysis" / "index.md", index)
+
+
+def build_market_phase() -> None:
+    url = "/research/market-phase/ai-semiconductor/"
+    page = front_matter(
+        "SMPA — AI半導体40銘柄",
+        "AI半導体40銘柄の相関・クラスタ・先行遅行分析",
+        url,
+    )
+    page += (
+        '<p class="breadcrumb"><a href="{{ \'/\' | relative_url }}">Home</a>'
+        " / Research / Market Phase / AI Semiconductor</p>\n\n"
+        "# Sado Market Phase Analyzer\n\n"
+        "AI半導体エコシステム40銘柄について、実際の日次リターンから"
+        "相関・自動クラスタ・統計上の先行遅行候補を調べます。\n\n"
+    )
+    if not MARKET_PHASE_DATA.exists():
+        page += (
+            '<div class="notice-card"><strong>分析データを生成中です。</strong>'
+            "<p>価格更新ワークフローの完了後に表示されます。</p></div>\n"
+        )
+        write(SITE / "research" / "market-phase" / "ai-semiconductor" / "index.md", page)
+        return
+
+    report = json.loads(MARKET_PHASE_DATA.read_text(encoding="utf-8"))
+    quality = report["data_quality"]
+    page += (
+        '<div class="metric-grid">'
+        f'<div><strong>{quality["included"]}</strong><span>分析対象</span></div>'
+        f'<div><strong>{report["universe"]["requested"]}</strong><span>候補銘柄</span></div>'
+        f'<div><strong>{len(set(report["clusters"].values()))}</strong><span>自動クラスタ</span></div>'
+        f'<div><strong>{report["generated_at"][:10]}</strong><span>更新日（UTC）</span></div>'
+        "</div>\n\n"
+        "## 正規化比較チャート\n\n"
+        '<div class="phase-controls">'
+        '<label>期間 <select id="phase-period">'
+        '<option value="22">1か月</option><option value="66">3か月</option>'
+        '<option value="132">6か月</option><option value="252" selected>1年</option>'
+        "</select></label>"
+        '<label>表示 <select id="phase-group"><option value="all">全銘柄</option>'
+    )
+    groups = sorted({row["group"] for row in report["symbols"]})
+    for group in groups:
+        page += f'<option value="{group}">{group}</option>'
+    page += (
+        "</select></label></div>\n"
+        '<div class="phase-chart-wrap"><svg id="phase-chart" viewBox="0 0 1000 460" '
+        'role="img" aria-label="開始日を100とした株価比較チャート"></svg></div>\n'
+        '<div id="phase-legend" class="phase-legend"></div>\n\n'
+        "## 相関ヒートマップ\n\n"
+        "<p>日次対数リターンのPearson相関です。セルを選ぶと銘柄ペアを確認できます。</p>\n"
+        '<div id="phase-heatmap" class="phase-heatmap" tabindex="0"></div>\n\n'
+        "## 自動クラスタ\n\n"
+        '<div id="phase-clusters" class="cluster-grid"></div>\n\n'
+        "### 期間別クラスタ比較\n\n"
+        '<div id="phase-cluster-periods"></div>\n\n'
+        "## 相関上位・下位ペア\n\n"
+        '<div class="two-column"><div><h3>相関上位</h3>'
+        '<div id="phase-positive"></div></div><div><h3>相関下位</h3>'
+        '<div id="phase-negative"></div></div></div>\n\n'
+        "## 先行・遅行候補\n\n"
+        "<p>±10営業日のラグ相関を比較した統計上の候補です。因果関係や売買シグナルではありません。</p>\n"
+        '<div id="phase-lead-lag"></div>\n\n'
+        "## データ品質・注意事項\n\n"
+        f"- 収録銘柄：{quality['included']} / {report['universe']['requested']}\n"
+        f"- 除外銘柄：{len(quality['excluded'])}\n"
+        "- 欠損日は前方補完せず、共通する取引日のみで比較します。\n"
+        "- 相関やラグ相関は期間によって変化し、因果関係を示しません。\n"
+        "- yfinanceはMVP用プロバイダーであり、将来J-Quantsへ交換可能な構成です。\n\n"
+        '<script type="application/json" id="phase-data">'
+        + json.dumps(report, ensure_ascii=False).replace("</", "<\\/")
+        + "</script>\n"
+        '<script src="{{ \'/assets/market-phase.js\' | relative_url }}" defer></script>\n'
+    )
+    write(SITE / "research" / "market-phase" / "ai-semiconductor" / "index.md", page)
 
 
 def metric(value: float | None, *, percent: bool = False) -> str:
@@ -650,6 +728,7 @@ def main() -> None:
 
     shutil.copy2(PAGES / "site.html", SITE / "_layouts" / "site.html")
     shutil.copy2(PAGES / "book.css", SITE / "assets" / "book.css")
+    shutil.copy2(PAGES / "market-phase.js", SITE / "assets" / "market-phase.js")
     shutil.copytree(
         ROOT / "assets" / "images",
         SITE / "assets" / "images",
@@ -661,6 +740,7 @@ def main() -> None:
     build_themes()
     build_companies()
     build_market_analysis()
+    build_market_phase()
     build_trade_journal()
     build_trade_analysis_landing()
 

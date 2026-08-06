@@ -1,0 +1,52 @@
+name: Update Sado Market Phase Analyzer
+
+on:
+  schedule:
+    - cron: "15 9 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-phase-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-market-phase.txt
+
+      - name: Install market data provider
+        run: python -m pip install -r requirements-market-phase.txt
+
+      - name: Update adjusted daily prices
+        run: python -m scripts.market_phase.fetch_prices --years 2 --continue-on-error
+
+      - name: Generate analysis and run tests
+        run: |
+          python -m scripts.market_phase.pipeline
+          python -m unittest tests.test_market_phase -v
+
+      - name: Commit price updates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/market/prices
+          if git diff --cached --quiet; then
+            echo "No market price changes"
+            exit 0
+          fi
+          git commit -m "data: update AI semiconductor market prices"
+          git push

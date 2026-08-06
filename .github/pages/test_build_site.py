@@ -205,6 +205,21 @@ class TradeJournalBuildTest(unittest.TestCase):
         self.assertNotIn("MARKET_CHART_DATA_URI", page)
         self.assertIn("/market-analysis/2026/2026-08-05/", index)
 
+    def test_market_phase_report_is_published(self) -> None:
+        build_site.build_market_phase()
+        page = (
+            build_site.SITE / "research" / "market-phase"
+            / "ai-semiconductor" / "index.md"
+        ).read_text(encoding="utf-8")
+        for expected in (
+            "Sado Market Phase Analyzer",
+            "正規化比較チャート",
+            "相関ヒートマップ",
+            'id="phase-data"',
+            "先行・遅行候補",
+        ):
+            self.assertIn(expected, page)
+
 
 if __name__ == "__main__":
     unittest.main()
