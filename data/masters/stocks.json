@@ -1,0 +1,10 @@
+{
+  "stocks": [
+    {"security_code":"3110","market":"東証プライム","sector":"ガラス・土石製品","primary_theme":"AI・半導体","themes":["AI","半導体","データセンター","素材"]},
+    {"security_code":"4063","market":"東証プライム","sector":"化学","primary_theme":"AI・半導体","themes":["AI","半導体","素材"]},
+    {"security_code":"5016","market":"東証プライム","sector":"非鉄金属","primary_theme":"AI・半導体","themes":["AI","半導体","素材"]},
+    {"security_code":"3778","market":"東証プライム","sector":"情報・通信","primary_theme":"データセンター","themes":["AI","データセンター","国産クラウド"]},
+    {"security_code":"6622","market":"東証プライム","sector":"電気機器","primary_theme":"電力インフラ","themes":["AI","データセンター","電力インフラ"]},
+    {"security_code":"6356","market":"東証スタンダード","sector":"機械","primary_theme":"電力インフラ","themes":["電力インフラ","原子力"]}
+  ]
+}

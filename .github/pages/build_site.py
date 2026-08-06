@@ -366,6 +366,8 @@ def line_chart(title: str, points: list[dict], keys: tuple[str, str]) -> str:
 def build_trade_analysis_landing() -> None:
     source = PUBLIC_TRADE_DATA if PUBLIC_TRADE_DATA.is_file() else TRADE_DATA_FIXTURE
     payload = json.loads(source.read_text(encoding="utf-8"))
+    if payload.get("schema_version", 1) >= 2:
+        payload = json.loads(TRADE_DATA_FIXTURE.read_text(encoding="utf-8"))
     summary = payload["summary"]
     period = payload["period"]
     years = payload.get("years", [])
@@ -720,6 +722,78 @@ def build_trade_journal() -> None:
     write(SITE / "trade-journal" / "index.md", index)
 
 
+def build_trade_analysis_v2() -> None:
+    """Build the interactive, raw-data Trade Analysis page."""
+    source = PUBLIC_TRADE_DATA if PUBLIC_TRADE_DATA.is_file() else TRADE_DATA_FIXTURE
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    if payload.get("schema_version", 1) < 2:
+        # The checked-in fixture is only a CI fallback. Production uses the
+        # generated version-2 payload committed from the local SQLite source.
+        build_trade_analysis_landing()
+        return
+    embedded = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+    page = front_matter(
+        "Trade Analysis",
+        "全期間の実取引データから投資行動を検証する",
+        "/trade-analysis/",
+    )
+    page += """# 📈 Trade Analysis
+
+銘柄、数量、価格、実現損益を含む実取引データから、投資判断の再現性を検証します。
+口座番号、認証情報、住所など、投資分析に不要な個人情報は公開しません。
+
+<p class="breadcrumb"><a href="{{ '/' | relative_url }}">Home</a> ＞ Trade Analysis</p>
+
+<section class="trade-filters" aria-label="取引フィルター">
+  <label>年<select id="ta-year"><option value="">全期間</option></select></label>
+  <label>月<select id="ta-month"><option value="">すべて</option></select></label>
+  <label>銘柄<select id="ta-symbol"><option value="">すべて</option></select></label>
+  <label>テーマ<select id="ta-theme"><option value="">すべて</option></select></label>
+  <label>現物・信用<select id="ta-account"><option value="">すべて</option></select></label>
+  <label>方向<select id="ta-side"><option value="">すべて</option></select></label>
+  <label>損益<select id="ta-result"><option value="">すべて</option><option value="win">利益</option><option value="loss">損失</option><option value="flat">同値</option></select></label>
+  <label>保有期間<select id="ta-holding"><option value="">すべて</option><option value="0">当日</option><option value="1-5">1～5日</option><option value="6-20">6～20日</option><option value="21-60">21～60日</option><option value="61+">61日以上</option></select></label>
+  <button type="button" id="ta-reset">条件をリセット</button>
+</section>
+
+<p id="ta-filter-summary" class="dashboard-period" aria-live="polite"></p>
+<div id="ta-summary" class="metric-grid"></div>
+
+## 累積実現損益
+
+> 証券口座の総資産推移ではなく、記録された決済済みTrade Episodeの実現損益累積です。
+
+<div id="ta-equity" class="trade-chart" role="img" aria-label="累積実現損益"></div>
+
+## 集計
+
+<div class="trade-tabs" role="tablist" aria-label="集計切替">
+  <button type="button" data-group="month" class="active">月別</button>
+  <button type="button" data-group="security">銘柄別</button>
+  <button type="button" data-group="account">現物・信用</button>
+  <button type="button" data-group="side">売買方向</button>
+  <button type="button" data-group="holding">保有期間</button>
+  <button type="button" data-group="weekday">曜日</button>
+  <button type="button" data-group="theme">主テーマ</button>
+</div>
+<div id="ta-group-table" class="table-scroll"></div>
+
+## 個別取引
+
+列見出しを選択すると並べ替えできます。「1取引」は、同一銘柄・口座区分・売買方向の建玉がゼロから始まり、再びゼロになるまでのTrade Episodeです。
+
+<div id="ta-trades" class="table-scroll"></div>
+
+## データ品質
+
+<div id="ta-quality"></div>
+
+<script id="trade-analysis-data" type="application/json">""" + embedded + """</script>
+<script src="{{ '/assets/trade-analysis.js' | relative_url }}" defer></script>
+"""
+    write(SITE / "trade-analysis" / "index.md", page)
+
+
 def main() -> None:
     if SITE.exists():
         shutil.rmtree(SITE)
@@ -729,6 +803,7 @@ def main() -> None:
     shutil.copy2(PAGES / "site.html", SITE / "_layouts" / "site.html")
     shutil.copy2(PAGES / "book.css", SITE / "assets" / "book.css")
     shutil.copy2(PAGES / "market-phase.js", SITE / "assets" / "market-phase.js")
+    shutil.copy2(PAGES / "trade-analysis.js", SITE / "assets" / "trade-analysis.js")
     shutil.copytree(
         ROOT / "assets" / "images",
         SITE / "assets" / "images",
@@ -742,7 +817,7 @@ def main() -> None:
     build_market_analysis()
     build_market_phase()
     build_trade_journal()
-    build_trade_analysis_landing()
+    build_trade_analysis_v2()
 
 
 if __name__ == "__main__":

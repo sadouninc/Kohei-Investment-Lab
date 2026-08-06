@@ -92,6 +92,17 @@ def grouped(rows: list[dict], key) -> list[dict]:
     ]
 
 
+def weekdays_grouped(rows: list[dict], date_key: str) -> list[dict]:
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for row in rows:
+        label = WEEKDAYS[date.fromisoformat(row[date_key]).weekday()]
+        groups[label].append(row)
+    return [
+        {"label": label, **statistics_for(groups[label])}
+        for label in WEEKDAYS if label in groups
+    ]
+
+
 def holding_periods(rows: list[dict]) -> list[dict]:
     result = []
     for label, minimum, maximum in HOLDING_BUCKETS:
@@ -197,12 +208,8 @@ def build_analysis(rows: list[dict]) -> dict:
         ),
         "by_year": grouped(rows, lambda row: row["close_date"][:4]),
         "by_month": grouped(rows, lambda row: row["close_date"][:7]),
-        "by_entry_weekday": grouped(
-            rows, lambda row: WEEKDAYS[date.fromisoformat(row["open_date"]).weekday()]
-        ),
-        "by_exit_weekday": grouped(
-            rows, lambda row: WEEKDAYS[date.fromisoformat(row["close_date"]).weekday()]
-        ),
+        "by_entry_weekday": weekdays_grouped(rows, "open_date"),
+        "by_exit_weekday": weekdays_grouped(rows, "close_date"),
         "holding_periods": holding_periods(rows),
         "concentration": concentration(rows),
         "equity_curve": equity_curve(rows),
