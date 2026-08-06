@@ -76,7 +76,6 @@ jobs:
           grep -q "4063-shinetsu" site-src/companies/index.md
           grep -q "3110-nittobo" site-src/companies/index.md
           grep -q "2026-08-05" site-src/market-analysis/index.md
-          grep -q "nikkei-daily-decline-factors-2026-08-05.png" site-src/market-analysis/2026/2026-08-05/index.md
           test -f assets/images/market-analysis/2026/nikkei-daily-decline-factors-2026-08-05.jpg
           grep -q "data:image/jpeg;base64," site-src/market-analysis/2026/2026-08-05/index.md
           grep -q "2026-08-03" site-src/trade-journal/index.md
