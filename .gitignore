@@ -6,6 +6,9 @@ data/database/**
 
 data/generated/**
 !data/generated/.gitkeep
+!data/generated/public/
+data/generated/public/**
+!data/generated/public/trade-analysis-summary.json
 
 *.sqlite
 *.sqlite3

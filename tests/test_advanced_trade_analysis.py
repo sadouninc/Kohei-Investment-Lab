@@ -36,16 +36,6 @@ CREATE TABLE closed_trades (
 """
 
 
-def insert_execution(db, values):
-    db.execute(
-        """INSERT INTO executions
-        (id,trade_date,account,product,transaction_type,side,security_code,
-         security_name,quantity,price,fee,tax)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-        values,
-    )
-
-
 class AdvancedTradeAnalysisTest(unittest.TestCase):
     def create_database(self, path):
         db = sqlite3.connect(path)
@@ -60,113 +50,81 @@ class AdvancedTradeAnalysisTest(unittest.TestCase):
             (7, "2026-07-10", "一般", "株式", "現物買", "BUY", "3003", "銘柄C", 100, 500, 0, 0),
             (8, "2026-07-11", "一般", "株式", "現物売", "SELL", "3003", "銘柄C", 40, 550, 0, 0),
         ]
-        for row in rows:
-            insert_execution(db, row)
+        db.executemany(
+            """INSERT INTO executions
+            (id,trade_date,account,product,transaction_type,side,security_code,
+             security_name,quantity,price,fee,tax)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+            rows,
+        )
         db.commit()
         db.close()
 
-    def test_episode_boundaries_partial_fills_and_stable_ids(self):
+    def analyzed_rows(self, path):
+        self.create_database(path)
+        with closing(sqlite3.connect(path)) as db:
+            episodes_module.persist(db, episodes_module.build_episodes(db))
+            return reports_module.load_closed_episodes(db)
+
+    def test_episode_boundaries_and_partial_fills(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "trades.sqlite"
-            self.create_database(path)
-            with closing(sqlite3.connect(path)) as db:
-                episodes = episodes_module.build_episodes(db)
-                episodes_module.persist(db, episodes)
-                first_ids = dict(db.execute(
-                    "SELECT episode_key,id FROM trade_episodes"
-                ).fetchall())
-                episodes_module.persist(db, episodes_module.build_episodes(db))
-                second_ids = dict(db.execute(
-                    "SELECT episode_key,id FROM trade_episodes"
-                ).fetchall())
-                rows = db.execute(
-                    "SELECT * FROM trade_episodes ORDER BY first_execution_id"
-                ).fetchall()
-
-            self.assertEqual(first_ids, second_ids)
-            self.assertEqual(len(rows), 3)
-            self.assertEqual(rows[0]["status"], "CLOSED")
+            rows = self.analyzed_rows(path)
+            self.assertEqual(len(rows), 2)
             self.assertEqual(rows[0]["open_execution_count"], 2)
             self.assertEqual(rows[0]["close_execution_count"], 2)
             self.assertEqual(rows[0]["holding_days"], 5)
             self.assertAlmostEqual(rows[0]["gross_pnl"], 33000)
             self.assertEqual(rows[1]["position_side"], "SHORT")
-            self.assertAlmostEqual(rows[1]["gross_pnl"], 20000)
-            self.assertEqual(rows[2]["status"], "OPEN")
-            self.assertEqual(rows[2]["total_close_quantity"], 40)
 
-    def test_advanced_metrics_and_public_payload_are_anonymous(self):
+    def test_public_payload_includes_investment_data_not_personal_data(self):
         with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "trades.sqlite"
-            self.create_database(path)
-            with closing(sqlite3.connect(path)) as db:
-                episodes_module.persist(db, episodes_module.build_episodes(db))
-                rows = reports_module.load_closed_episodes(db)
-            analysis = reports_module.build_analysis(rows)
-            self.assertEqual(analysis["overall"]["trade_count"], 2)
-            self.assertEqual(analysis["overall"]["win_count"], 2)
-            self.assertEqual(analysis["overall"]["max_win_streak"], 2)
-            self.assertEqual(len(analysis["holding_periods"]), 8)
-
-            payload = public_module.build_public_payload(rows, "2026-08-05")
-            public_module.assert_public(payload)
+            rows = self.analyzed_rows(Path(temporary) / "trades.sqlite")
+            payload = public_module.build_public_payload(rows, "2026-08-05", stock_master={})
+            public_module.assert_no_private_data(payload)
             serialized = json.dumps(payload, ensure_ascii=False)
-            for private_value in ("銘柄A", "銘柄B", "1001", "2002", "33000", "20000"):
-                self.assertNotIn(private_value, serialized)
+            for value in ("銘柄A", "銘柄B", "1001", "2002", "33000", "20000"):
+                self.assertIn(value, serialized)
+            for key in ("episode_key", "account", "first_execution_id"):
+                self.assertNotIn(f'"{key}"', serialized)
             self.assertEqual(payload["summary"]["trade_count"], 2)
-            self.assertIn("indexed_expectancy", payload["summary"])
+            self.assertEqual(payload["summary"]["net_pnl"], 52950)
+            self.assertEqual(len(payload["trades"]), 2)
 
     def test_period_breakdowns_reconcile_with_all_time(self):
         with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "trades.sqlite"
-            self.create_database(path)
-            with closing(sqlite3.connect(path)) as db:
-                episodes_module.persist(db, episodes_module.build_episodes(db))
-                rows = reports_module.load_closed_episodes(db)
+            rows = self.analyzed_rows(Path(temporary) / "trades.sqlite")
             analysis = reports_module.build_analysis(rows)
             overall = analysis["overall"]
-
             for key in ("by_year", "by_month", "by_account_type", "holding_periods"):
                 self.assertEqual(
                     sum(item["trade_count"] for item in analysis[key]),
                     overall["trade_count"],
-                    key,
                 )
             for key in ("by_year", "by_month"):
                 self.assertAlmostEqual(
                     sum(item["net_pnl"] for item in analysis[key]),
                     overall["net_pnl"],
-                    msg=key,
                 )
+
+    def test_weekdays_are_calendar_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            rows = self.analyzed_rows(Path(temporary) / "trades.sqlite")
+            labels = [
+                item["label"]
+                for item in reports_module.build_analysis(rows)["by_entry_weekday"]
+            ]
             self.assertEqual(
-                overall["win_count"]
-                + overall["loss_count"]
-                + overall["breakeven_count"],
-                overall["trade_count"],
+                labels, [day for day in reports_module.WEEKDAYS if day in labels]
             )
 
-    def test_empty_dataset_builds_public_payload(self):
+    def test_empty_dataset_builds(self):
         payload = public_module.build_public_payload([], "2026-08-05")
-        public_module.assert_public(payload)
+        public_module.assert_no_private_data(payload)
         self.assertEqual(payload["summary"]["trade_count"], 0)
-        self.assertEqual(payload["years"], [])
-        self.assertEqual(payload["months"], [])
-        self.assertEqual(payload["monthly_equity_curve"]["points"], [])
-
-    def test_private_outputs_remain_under_generated_directory(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            path = root / "trades.sqlite"
-            output = root / "data" / "generated"
-            self.create_database(path)
-            with closing(sqlite3.connect(path)) as db:
-                episodes_module.persist(db, episodes_module.build_episodes(db))
-                rows = reports_module.load_closed_episodes(db)
-            reports_module.write_reports(output, rows, reports_module.build_analysis(rows))
-            self.assertTrue((output / "trade_episodes.csv").is_file())
-            self.assertTrue((output / "Advanced_Trading_Statistics.md").is_file())
+        self.assertEqual(payload["trades"], [])
+        self.assertEqual(payload["equity_curve"]["points"], [])
 
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Create an anonymized aggregate-only JSON payload for GitHub Pages."""
+"""Generate the public, analysis-complete Trade Analysis JSON.
+
+Investment facts (security, quantity, price and P&L) are intentionally public.
+Account identifiers, source paths, execution fingerprints and credentials are
+never emitted.
+"""
 from __future__ import annotations
 
 import argparse
@@ -11,117 +16,149 @@ import sys
 
 from generate_advanced_trade_reports import build_analysis, load_closed_episodes
 
-PUBLIC_SCHEMA_VERSION = 1
-FORBIDDEN_KEYS = {
-    "security_code", "security_name", "account", "episode_key",
-    "execution_id", "price", "quantity", "net_pnl", "gross_pnl",
-    "realized_pnl", "amount",
+PUBLIC_SCHEMA_VERSION = 2
+PRIVATE_KEYS = {
+    "account",
+    "episode_key",
+    "execution_id",
+    "first_execution_id",
+    "final_execution_id",
+    "source_file",
+    "fingerprint",
+    "login_id",
+    "password",
+    "api_key",
+    "email",
+    "phone",
+    "address",
 }
 
 
-def indexed_expectancy(rows: list[dict], expectancy: float) -> float:
-    absolute_mean = (
-        sum(abs(float(row["net_pnl"])) for row in rows) / len(rows) if rows else 0
-    )
-    return round(100 + (expectancy / absolute_mean * 100), 2) if absolute_mean else 100.0
+def rounded(value: float | None, digits: int = 2) -> float | None:
+    return round(float(value), digits) if value is not None else None
 
 
-def index_value(value: float, scale: float) -> float:
-    return round(value / scale * 100, 2) if scale else 0.0
-
-
-def safe_metrics(item: dict, scale: float) -> dict:
+def public_metrics(item: dict) -> dict:
     return {
         "label": item["label"],
         "trade_count": item["trade_count"],
         "win_count": item["win_count"],
         "loss_count": item["loss_count"],
         "breakeven_count": item["breakeven_count"],
-        "win_rate": round(item["win_rate"], 6),
-        "profit_factor": (
-            round(item["profit_factor"], 4)
-            if item["profit_factor"] is not None else None
-        ),
-        "payoff_ratio": (
-            round(item["payoff_ratio"], 4)
-            if item["payoff_ratio"] is not None else None
-        ),
-        "average_holding_days": round(item["average_holding_days"], 2),
-        "median_holding_days": round(item["median_holding_days"], 2),
-        "indexed_net_result": index_value(item["net_pnl"], scale),
-        "indexed_gross_gain": index_value(item["gross_profit"], scale),
-        "indexed_gross_decline": index_value(item["gross_loss"], scale),
-        "indexed_average_gain": index_value(item["average_win"], scale),
-        "indexed_average_decline": index_value(item["average_loss"], scale),
-        "indexed_max_gain": index_value(item["max_win"], scale),
-        "indexed_max_decline": index_value(abs(item["max_loss"]), scale),
+        "win_rate": rounded(item["win_rate"], 6),
+        "profit_factor": rounded(item["profit_factor"], 4),
+        "payoff_ratio": rounded(item["payoff_ratio"], 4),
+        "net_pnl": rounded(item["net_pnl"]),
+        "gross_profit": rounded(item["gross_profit"]),
+        "gross_loss": rounded(item["gross_loss"]),
+        "average_win": rounded(item["average_win"]),
+        "average_loss": rounded(item["average_loss"]),
+        "average_holding_days": rounded(item["average_holding_days"]),
+        "median_holding_days": rounded(item["median_holding_days"]),
+        "max_win": rounded(item["max_win"]),
+        "max_loss": rounded(item["max_loss"]),
     }
 
 
-def monthly_curve(months: list[dict], scale: float) -> dict:
-    cumulative = 0.0
-    high_water = 0.0
-    max_drawdown = 0.0
-    points = []
-    max_start = max_end = None
-    peak_month = None
-    for item in months:
-        cumulative += item["net_pnl"]
-        if cumulative >= high_water:
-            high_water = cumulative
-            peak_month = item["label"]
-        drawdown = cumulative - high_water
-        if drawdown < max_drawdown:
-            max_drawdown = drawdown
-            max_start = peak_month
-            max_end = item["label"]
-        points.append({
-            "month": item["label"],
-            "indexed_month_result": index_value(item["net_pnl"], scale),
-            "indexed_cumulative_result": index_value(cumulative, scale),
-            "indexed_drawdown": index_value(drawdown, scale),
-        })
+def equity_curve(points: list[dict]) -> dict:
+    maximum = min((float(row["drawdown"]) for row in points), default=0.0)
     return {
-        "points": points,
-        "indexed_max_drawdown": index_value(max_drawdown, scale),
-        "max_drawdown_start_month": max_start,
-        "max_drawdown_end_month": max_end,
+        "points": [
+            {
+                "date": row["date"],
+                "cumulative_pnl": rounded(row["cumulative_pnl"]),
+                "high_water_pnl": rounded(row["high_water_pnl"]),
+                "drawdown": rounded(row["drawdown"]),
+            }
+            for row in points
+        ],
+        "max_drawdown": rounded(maximum),
     }
 
 
-def load_data_quality(db: sqlite3.Connection) -> dict:
+def load_stock_master(path: Path | None) -> dict[str, dict]:
+    if not path or not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    rows = payload.get("stocks", payload)
+    return {
+        str(row["security_code"]): {
+            "sector": row.get("sector") or "未分類",
+            "primary_theme": row.get("primary_theme") or "未分類",
+            "themes": row.get("themes") or [row.get("primary_theme") or "未分類"],
+            "market": row.get("market") or "不明",
+        }
+        for row in rows
+    }
+
+
+def public_trade(row: dict, master: dict[str, dict]) -> dict:
+    code = str(row.get("security_code") or "")
+    tags = master.get(code, {})
+    return {
+        "id": row["id"],
+        "security_code": code,
+        "security_name": row.get("security_name") or "銘柄名不明",
+        "market": tags.get("market", "不明"),
+        "sector": tags.get("sector", "未分類"),
+        "primary_theme": tags.get("primary_theme", "未分類"),
+        "themes": tags.get("themes", ["未分類"]),
+        "account_type": row.get("account_type") or "UNKNOWN",
+        "position_side": row.get("position_side") or "UNKNOWN",
+        "open_date": row.get("open_date"),
+        "close_date": row.get("close_date"),
+        "quantity": rounded(row.get("total_close_quantity")),
+        "average_open_price": rounded(row.get("weighted_average_open_price")),
+        "average_close_price": rounded(row.get("weighted_average_close_price")),
+        "gross_pnl": rounded(row.get("gross_pnl")),
+        "costs": rounded(row.get("allocated_costs")),
+        "net_pnl": rounded(row.get("net_pnl")),
+        "return_rate": rounded(
+            float(row.get("net_pnl") or 0)
+            / (
+                float(row.get("weighted_average_open_price") or 0)
+                * float(row.get("total_close_quantity") or 0)
+            ),
+            6,
+        )
+        if row.get("weighted_average_open_price") and row.get("total_close_quantity")
+        else None,
+        "holding_days": row.get("holding_days"),
+        "open_execution_count": row.get("open_execution_count"),
+        "close_execution_count": row.get("close_execution_count"),
+    }
+
+
+def grouped_trades(trades: list[dict], key: str) -> list[dict]:
+    from generate_advanced_trade_reports import statistics_for
+
+    groups: dict[str, list[dict]] = {}
+    for trade in trades:
+        labels = trade.get(key)
+        labels = labels if isinstance(labels, list) else [labels]
+        for label in labels:
+            groups.setdefault(str(label or "未分類"), []).append(trade)
+    return [
+        {
+            **public_metrics({"label": label, **statistics_for(rows)}),
+            "is_reference_total": key == "themes",
+        }
+        for label, rows in sorted(groups.items())
+    ]
+
+
+def load_data_quality(db: sqlite3.Connection, trade_count: int) -> dict:
     def count(query: str) -> int:
         try:
-            return db.execute(query).fetchone()[0]
+            return int(db.execute(query).fetchone()[0])
         except sqlite3.OperationalError:
             return 0
 
-    audit_exists = count(
-        """SELECT COUNT(*) FROM sqlite_master
-           WHERE type='table' AND name='import_audit'"""
-    )
-    audit_source_records = duplicate_count = None
-    if audit_exists:
-        audit_source_records = count(
-            """SELECT COALESCE(SUM(source_record_count),0) FROM import_audit
-               WHERE id IN (SELECT MAX(id) FROM import_audit GROUP BY source_file)"""
-        )
-        duplicate_count = count(
-            """SELECT COALESCE(SUM(duplicate_count),0) FROM import_audit
-               WHERE id IN (SELECT MAX(id) FROM import_audit GROUP BY source_file)"""
-        )
     return {
         "source_csv_count": count("SELECT COUNT(DISTINCT source_file) FROM executions"),
-        "source_record_count": (
-            audit_source_records
-            if audit_source_records is not None
-            else count("SELECT COUNT(*) FROM executions")
-        ),
+        "source_record_count": count("SELECT COUNT(*) FROM executions"),
         "valid_record_count": count("SELECT COUNT(*) FROM executions"),
-        "duplicate_excluded_count": duplicate_count,
-        "closed_episode_count": count(
-            "SELECT COUNT(*) FROM trade_episodes WHERE status='CLOSED'"
-        ),
+        "closed_episode_count": trade_count,
         "open_episode_count": count(
             "SELECT COUNT(*) FROM trade_episodes WHERE status='OPEN'"
         ),
@@ -129,108 +166,105 @@ def load_data_quality(db: sqlite3.Connection) -> dict:
             "SELECT COUNT(*) FROM unmatched_executions"
         ),
         "unresolved_security_count": count(
-            """SELECT COUNT(*) FROM executions
-               WHERE security_name IS NULL OR trim(security_name)=''"""
+            "SELECT COUNT(*) FROM executions "
+            "WHERE security_name IS NULL OR trim(security_name)=''"
         ),
-        "theme_unclassified_count": None,
         "matching_method": "FIFO / Trade Episode",
+        "trade_unit": "建玉がゼロから始まり、再びゼロに戻るまでを1取引とする",
     }
 
 
 def build_public_payload(
-    rows: list[dict], updated: str | None = None, quality: dict | None = None
+    rows: list[dict],
+    updated: str | None = None,
+    quality: dict | None = None,
+    stock_master: dict[str, dict] | None = None,
 ) -> dict:
     analysis = build_analysis(rows)
     overall = analysis["overall"]
-    scale = (
-        sum(abs(float(row["net_pnl"])) for row in rows) / len(rows)
-        if rows else 0.0
-    )
-    years = [safe_metrics(item, scale) for item in analysis["by_year"]]
-    months = [safe_metrics(item, scale) for item in analysis["by_month"]]
+    master = stock_master or {}
+    trades = [public_trade(row, master) for row in rows]
+    securities = grouped_trades(trades, "security_code")
+    names = {trade["security_code"]: trade["security_name"] for trade in trades}
+    for row in securities:
+        row["security_code"] = row.pop("label")
+        row["security_name"] = names.get(row["security_code"], "銘柄名不明")
+
     return {
         "schema_version": PUBLIC_SCHEMA_VERSION,
+        "publication_policy": (
+            "投資分析に必要な銘柄・数量・価格・損益は公開し、"
+            "口座番号・認証情報・住所などの個人情報のみ除外する"
+        ),
         "updated_date": updated or date.today().isoformat(),
         "period": analysis["period"],
         "summary": {
-            "trade_count": overall["trade_count"],
-            "win_rate": round(overall["win_rate"], 6),
-            "profit_factor": (
-                round(overall["profit_factor"], 4)
-                if overall["profit_factor"] is not None else None
-            ),
-            "payoff_ratio": (
-                round(overall["payoff_ratio"], 4)
-                if overall["payoff_ratio"] is not None else None
-            ),
-            "indexed_expectancy": indexed_expectancy(rows, overall["expectancy"]),
-            "average_holding_days": round(overall["average_holding_days"], 2),
-            "median_holding_days": round(overall["median_holding_days"], 2),
+            **public_metrics({"label": "全期間", **overall}),
+            "expectancy": rounded(overall["expectancy"]),
+            "mean_pnl": rounded(overall["mean_pnl"]),
+            "median_pnl": rounded(overall["median_pnl"]),
             "max_win_streak": overall["max_win_streak"],
             "max_loss_streak": overall["max_loss_streak"],
-            "win_count": overall["win_count"],
-            "loss_count": overall["loss_count"],
-            "breakeven_count": overall["breakeven_count"],
             "closed_trade_count": overall["trade_count"],
-            "indexed_net_result": index_value(overall["net_pnl"], scale),
-            "indexed_gross_gain": index_value(overall["gross_profit"], scale),
-            "indexed_gross_decline": index_value(overall["gross_loss"], scale),
-            "indexed_average_gain": index_value(overall["average_win"], scale),
-            "indexed_average_decline": index_value(overall["average_loss"], scale),
-            "indexed_max_gain": index_value(overall["max_win"], scale),
-            "indexed_max_decline": index_value(abs(overall["max_loss"]), scale),
         },
-        "years": years,
-        "months": months,
-        "monthly_equity_curve": monthly_curve(analysis["by_month"], scale),
+        "years": [public_metrics(row) for row in analysis["by_year"]],
+        "months": [public_metrics(row) for row in analysis["by_month"]],
+        "equity_curve": equity_curve(analysis["equity_curve"]["points"]),
         "holding_periods": [
-            safe_metrics(item, scale) for item in analysis["holding_periods"]
+            public_metrics(row) for row in analysis["holding_periods"]
         ],
         "entry_weekdays": [
-            safe_metrics(item, scale) for item in analysis["by_entry_weekday"]
+            public_metrics(row) for row in analysis["by_entry_weekday"]
         ],
         "exit_weekdays": [
-            safe_metrics(item, scale) for item in analysis["by_exit_weekday"]
+            public_metrics(row) for row in analysis["by_exit_weekday"]
         ],
         "position_sides": [
-            safe_metrics(item, scale) for item in analysis["by_position_side"]
+            public_metrics(row) for row in analysis["by_position_side"]
         ],
         "account_types": [
-            safe_metrics(item, scale) for item in analysis["by_account_type"]
+            public_metrics(row) for row in analysis["by_account_type"]
         ],
+        "securities": securities,
+        "sectors": grouped_trades(trades, "sector"),
+        "primary_themes": grouped_trades(trades, "primary_theme"),
+        "theme_tags": grouped_trades(trades, "themes"),
+        "trades": trades,
         "concentration": {
-            key: (round(value, 4) if value is not None else None)
+            key: rounded(value, 4)
             for key, value in analysis["concentration"].items()
         },
         "data_quality": quality or {
             "source_csv_count": None,
             "source_record_count": None,
             "valid_record_count": None,
-            "duplicate_excluded_count": None,
             "closed_episode_count": overall["trade_count"],
             "open_episode_count": None,
             "unmatched_execution_count": None,
             "unresolved_security_count": None,
-            "theme_unclassified_count": None,
             "matching_method": "FIFO / Trade Episode",
+            "trade_unit": "建玉がゼロから始まり、再びゼロに戻るまでを1取引とする",
         },
     }
 
 
-def assert_public(payload: object, path: str = "$") -> None:
+def assert_no_private_data(payload: object, path: str = "$") -> None:
     if isinstance(payload, dict):
         for key, value in payload.items():
-            lowered = key.lower()
-            if lowered in FORBIDDEN_KEYS:
-                raise ValueError(f"公開禁止キーを検出しました: {path}.{key}")
-            assert_public(value, f"{path}.{key}")
+            if key.lower() in PRIVATE_KEYS:
+                raise ValueError(f"非公開キーを検出しました: {path}.{key}")
+            assert_no_private_data(value, f"{path}.{key}")
     elif isinstance(payload, list):
         for index, value in enumerate(payload):
-            assert_public(value, f"{path}[{index}]")
+            assert_no_private_data(value, f"{path}[{index}]")
+
+
+# Compatibility for callers from schema version 1.
+assert_public = assert_no_private_data
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="匿名化した公開用取引統計JSONを生成")
+    parser = argparse.ArgumentParser(description="公開用の実取引分析JSONを生成")
     parser.add_argument(
         "--db", "--database", dest="db", type=Path,
         default=Path("data/database/investment_lab.sqlite"),
@@ -239,22 +273,31 @@ def main() -> int:
         "--output", type=Path,
         default=Path("data/generated/public/trade-analysis-summary.json"),
     )
-    parser.add_argument("--updated-date", help="再現可能な生成用の日付（YYYY-MM-DD）")
+    parser.add_argument(
+        "--stock-master", type=Path,
+        default=Path("data/masters/stocks.json"),
+    )
+    parser.add_argument("--updated-date", help="再現可能な生成日（YYYY-MM-DD）")
     args = parser.parse_args()
     if not args.db.is_file():
         parser.error(f"DBが見つかりません: {args.db}")
     try:
         with sqlite3.connect(args.db) as db:
             rows = load_closed_episodes(db)
-            quality = load_data_quality(db)
-        payload = build_public_payload(rows, args.updated_date, quality)
-        assert_public(payload)
+            quality = load_data_quality(db, len(rows))
+        payload = build_public_payload(
+            rows,
+            args.updated_date,
+            quality,
+            load_stock_master(args.stock_master),
+        )
+        assert_no_private_data(payload)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-        print(f"公開用匿名統計: {args.output.resolve()}（{len(rows)}取引）")
+        print(f"公開用実取引JSON: {args.output.resolve()}（{len(rows)}取引）")
         return 0
     except (sqlite3.Error, OSError, ValueError) as exc:
         print(f"公開用JSON生成失敗: {exc}", file=sys.stderr)
@@ -263,4 +306,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -11,6 +11,8 @@ on:
       - "03_Companies/**"
       - "04_Market/**"
       - "data/market/**"
+      - "data/masters/**"
+      - "data/generated/public/trade-analysis-summary.json"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
@@ -26,6 +28,8 @@ on:
       - "03_Companies/**"
       - "04_Market/**"
       - "data/market/**"
+      - "data/masters/**"
+      - "data/generated/public/trade-analysis-summary.json"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
@@ -90,15 +94,15 @@ jobs:
           grep -q "data:image/jpeg;base64," site-src/market-analysis/2026/2026-08-05/index.md
           grep -q "2026-08-03" site-src/trade-journal/index.md
           grep -q "2026-08-04" site-src/trade-journal/index.md
-          grep -q "期待値指数" site-src/trade-analysis/index.md
-          grep -q "Today's Lesson" site-src/trade-analysis/index.md
-          grep -q "Framework Candidate" site-src/trade-analysis/index.md
-          grep -q "年別パフォーマンス" site-src/trade-analysis/index.md
-          grep -q "月別パフォーマンス" site-src/trade-analysis/index.md
-          grep -q "累積結果・ドローダウン" site-src/trade-analysis/index.md
+          grep -q "全期間の実取引データ" site-src/trade-analysis/index.md
+          grep -q 'id="ta-symbol"' site-src/trade-analysis/index.md
+          grep -q 'id="ta-theme"' site-src/trade-analysis/index.md
+          grep -q "trade-analysis-data" site-src/trade-analysis/index.md
           grep -q "データ品質" site-src/trade-analysis/index.md
-          ! grep -Eq "security_(code|name)|net_pnl|gross_pnl|quantity|price" site-src/trade-analysis/index.md
-          ! grep -Eq "日東紡|JX金属|3110|5016" site-src/trade-analysis/index.md
+          grep -q '"security_name"' site-src/trade-analysis/index.md
+          grep -q '"net_pnl"' site-src/trade-analysis/index.md
+          ! grep -Eq '"(episode_key|account|first_execution_id|final_execution_id)"' site-src/trade-analysis/index.md
+          test -f site-src/assets/trade-analysis.js
           grep -q "2026-08-05" site-src/trade-journal/index.md
 
       - name: Configure Pages
