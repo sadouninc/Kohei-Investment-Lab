@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import re
 import shutil
@@ -14,6 +15,8 @@ SITE = ROOT / "site-src"
 PUBLIC_TRADE_DATA = ROOT / "data" / "generated" / "public" / "trade-analysis-summary.json"
 TRADE_DATA_FIXTURE = PAGES / "fixtures" / "trade-analysis-summary.json"
 TRADE_IMPROVEMENT_NOTES = ROOT / "08_Trade_Analysis" / "Improvement_Notes.md"
+MARKET_CHART_IMAGE = ROOT / "assets" / "images" / "market-analysis" / "2026" / "nikkei-daily-decline-factors-2026-08-05.jpg"
+MARKET_CHART_PLACEHOLDER = "{{ MARKET_CHART_DATA_URI }}"
 
 FRAMEWORK_CHAPTERS = [
     ("philosophy", ROOT / "00_Framework" / "01_Investment_Philosophy.md"),
@@ -166,7 +169,14 @@ def build_market_analysis() -> None:
             '<p class="breadcrumb"><a href="{{ \'/market-analysis/\' | relative_url }}">'
             f"Market Analysis</a> / {year} / {title}</p>\n\n"
         )
-        page += source.read_text(encoding="utf-8")
+        content = source.read_text(encoding="utf-8")
+        if MARKET_CHART_PLACEHOLDER in content:
+            encoded_chart = base64.b64encode(MARKET_CHART_IMAGE.read_bytes()).decode("ascii")
+            content = content.replace(
+                MARKET_CHART_PLACEHOLDER,
+                f"data:image/jpeg;base64,{encoded_chart}",
+            )
+        page += content
         write(SITE / "market-analysis" / year / page_slug / "index.md", page)
 
     index = front_matter(
@@ -644,11 +654,6 @@ def main() -> None:
         ROOT / "assets" / "images",
         SITE / "assets" / "images",
         dirs_exist_ok=True,
-    )
-    shutil.copy2(
-        ROOT / "assets" / "images" / "market-analysis" / "2026"
-        / "nikkei-daily-decline-factors-2026-08-05.png",
-        SITE / "assets" / "images" / "nikkei-daily-decline-factors-2026-08-05.png",
     )
     shutil.copy2(PAGES / "home.md", SITE / "index.md")
 
