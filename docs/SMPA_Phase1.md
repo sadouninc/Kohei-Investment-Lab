@@ -52,3 +52,9 @@ python -m unittest tests.test_market_phase -v
 - 新規上場銘柄は取得期間が短い
 - 価格データの訂正や配信遅延があり得る
 - 正式なSado AI半導体指数、売買シグナル、資金移動分析は対象外
+
+## 次のレイヤー
+
+Phase 1を残したまま、AI需要が半導体、通信、ソフトウェア、ロボット、電力、冷却へどう波及するかを観察するLayer 2を設計する。
+
+設計、初期ユニバース、拡張方法は[`SMPA_AI_Ecosystem_Design.md`](SMPA_AI_Ecosystem_Design.md)を参照する。
