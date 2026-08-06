@@ -1,0 +1,1 @@
+"""Sado Market Phase Analyzer."""

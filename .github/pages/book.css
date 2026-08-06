@@ -266,6 +266,31 @@ code { font-size: .9em; }
   .market-chart { width: calc(100vw - 1.5rem); }
   table { display: block; overflow-x: auto; }
 }
+.phase-controls { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+.phase-controls label { font-weight: 600; }
+.phase-controls select { margin-left: .4rem; padding: .45rem .7rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--paper); color: var(--ink); }
+.phase-chart-wrap, .phase-heatmap { overflow: auto; border: 1px solid var(--line); border-radius: .8rem; background: var(--paper); }
+#phase-chart { display: block; min-width: 720px; width: 100%; }
+#phase-chart text { fill: var(--muted); font: 13px sans-serif; }
+.chart-baseline { stroke: var(--muted); stroke-dasharray: 6 5; opacity: .55; }
+.phase-legend { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: .8rem 0 2rem; font-size: .8rem; }
+.phase-legend span { display: inline-flex; align-items: center; }
+.phase-legend i { width: .65rem; height: .65rem; margin-right: .3rem; border-radius: 50%; }
+.phase-heatmap table { border-collapse: collapse; min-width: 1100px; font-size: .68rem; }
+.phase-heatmap th, .phase-heatmap td { min-width: 2rem; padding: .22rem; text-align: center; border: 1px solid var(--line); }
+.phase-heatmap th { position: sticky; left: 0; background: var(--paper); z-index: 1; }
+.cluster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+.cluster-grid section { border: 1px solid var(--line); border-radius: .8rem; padding: 1rem; }
+.cluster-grid h3 { margin-top: 0; }
+.cluster-grid li { margin: .35rem 0; }
+.cluster-grid small { display: block; color: var(--muted); }
+.two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.table-scroll { overflow-x: auto; }
+.notice-card { padding: 1.2rem; border: 1px solid var(--line); border-radius: .8rem; }
+@media (max-width: 700px) {
+  .two-column { grid-template-columns: 1fr; }
+  .phase-controls label, .phase-controls select { width: 100%; margin-left: 0; }
+}
 @media print {
   .theme-toggle, .back-to-top, .reading-progress { display: none; }
   body { background: white; color: black; }
