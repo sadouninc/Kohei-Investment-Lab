@@ -1,0 +1,82 @@
+name: Daily Knowledge Trigger
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      event_fixture:
+        description: "Optional repository-relative JSON event fixture for manual validation"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-knowledge-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'daily-knowledge')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+
+      - name: Resolve event payload
+        id: event
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="${{ inputs.event_fixture }}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ -z "$fixture" ]]; then
+              echo "workflow_dispatch requires event_fixture for PR1 validation"
+              exit 1
+            fi
+            if [[ ! -f "$fixture" ]]; then
+              echo "Event fixture not found: $fixture"
+              exit 1
+            fi
+            echo "path=$fixture" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=$GITHUB_EVENT_PATH" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run unit tests
+        run: python3 -m unittest tests.test_daily_knowledge_capture
+
+      - name: Capture daily-knowledge issue
+        run: |
+          python3 scripts/daily_knowledge_capture.py \
+            --event "${{ steps.event.outputs.path }}" \
+            --output-dir data/generated/diagnostics/daily-knowledge
+
+      - name: Verify diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          paths = list(Path('data/generated/diagnostics/daily-knowledge').glob('issue-*.json'))
+          assert len(paths) == 1, paths
+          payload = json.loads(paths[0].read_text(encoding='utf-8'))
+          assert payload['status'] == 'CAPTURED', payload
+          assert payload['trigger']['label'] == 'daily-knowledge', payload
+          assert payload['next_stage'] == 'ai-integration-planner', payload
+          print('captured issue:', payload['issue']['number'], payload['issue']['title'])
+          PY
+
+      - name: Upload capture diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-knowledge-issue-${{ github.event.issue.number || github.run_id }}
+          path: data/generated/diagnostics/daily-knowledge/*.json
+          if-no-files-found: error
+          retention-days: 14
