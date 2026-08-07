@@ -44,6 +44,13 @@ EXPECTED_HISTORY_TABLES = {
     "compatibility_assessments",
     "compatibility_factors",
     "strategy_experiments",
+    "investor_environment_profiles",
+    "investor_style_periods",
+    "environment_fit_assessments",
+    "security_lifetime_contributions",
+    "theme_lifetime_contributions",
+    "risk_pattern_assessments",
+    "daily_dna_fit_assessments",
 }
 
 EXPECTED_ANALYSIS_TABLES = {
@@ -75,7 +82,7 @@ class DecisionOSSchemaTest(unittest.TestCase):
 
             self.assertEqual(["001_master_schema.sql"], first["master"][1])
             self.assertEqual(
-                ["001_history_schema.sql", "002_investor_dna.sql"],
+                ["001_history_schema.sql", "002_investor_dna.sql", "003_investor_dna_v2.sql"],
                 first["history"][1],
             )
             self.assertEqual(["001_analysis_schema.sql"], first["analysis"][1])
