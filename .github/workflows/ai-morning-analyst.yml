@@ -70,7 +70,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add 05_Daily_Reports/Morning data/generated/diagnostics/openai
+          git add 05_Daily_Reports/Morning
+          # Most generated data stays ignored. AI diagnostics are a deliberate
+          # exception because they are part of the reproducible research history.
+          git add -f data/generated/diagnostics/openai
           if git diff --cached --quiet; then
             echo "No report changes to commit."
             exit 0
