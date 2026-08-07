@@ -39,6 +39,9 @@ jobs:
             --market data/generated/public/market-phase/ai-semiconductor.json \
             --investor-dna data/generated/public/investor-dna.json
 
+      - name: Test context optimizer
+        run: python3 -m unittest tests.test_context_optimizer
+
       - name: Generate AI Morning Report
         run: python3 scripts/ai_morning_analyst.py
 
@@ -55,8 +58,11 @@ jobs:
           )"
           test -f "05_Daily_Reports/Morning/${day}.md"
           test -f "data/generated/diagnostics/openai/${day}.json"
+          test -f "data/generated/diagnostics/openai/optimized-morning-dataset.json"
           grep -q "# AI Morning Report" "05_Daily_Reports/Morning/${day}.md"
           grep -q '"status": "OK"' "data/generated/diagnostics/openai/${day}.json"
+          grep -q '"context_optimization"' "data/generated/diagnostics/openai/${day}.json"
+          grep -q '"optimized_prompt_chars"' "data/generated/diagnostics/openai/${day}.json"
 
       - name: Commit report and diagnostics
         shell: bash
