@@ -1,0 +1,535 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-07T09:12:06+00:00",
+  "as_of": "2026-08-07",
+  "data_quality": {
+    "status": "PARTIAL",
+    "completeness": 0.2857,
+    "available_sources": 2,
+    "total_sources": 7
+  },
+  "warnings": [
+    "portfolio source is missing",
+    "capital source is missing",
+    "candidates source is missing",
+    "events source is missing",
+    "watchlist source is missing"
+  ],
+  "source_status": [
+    {
+      "name": "market",
+      "source": null,
+      "as_of": null,
+      "status": "OK"
+    },
+    {
+      "name": "portfolio",
+      "source": null,
+      "as_of": null,
+      "status": "MISSING"
+    },
+    {
+      "name": "capital",
+      "source": null,
+      "as_of": null,
+      "status": "MISSING"
+    },
+    {
+      "name": "candidates",
+      "source": null,
+      "as_of": null,
+      "status": "MISSING"
+    },
+    {
+      "name": "investor_dna",
+      "source": null,
+      "as_of": null,
+      "status": "OK"
+    },
+    {
+      "name": "events",
+      "source": null,
+      "as_of": null,
+      "status": "MISSING"
+    },
+    {
+      "name": "watchlist",
+      "source": null,
+      "as_of": null,
+      "status": "MISSING"
+    }
+  ],
+  "market": {
+    "generated_at": "2026-08-07T09:12:02+00:00",
+    "data_quality": {
+      "included": 40,
+      "excluded": [],
+      "symbols": {
+        "3110": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "4063": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "3436": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "4004": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "5016": {
+          "rows": 339,
+          "start": "2025-03-19",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "5706": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "5384": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "4186": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "4369": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "4626": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "4062": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6315": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "7911": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "7912": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6871": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6855": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "8035": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "7735": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6146": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6525": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6590": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6368": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6361": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "7731": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "7729": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6254": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6857": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6920": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6965": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6951": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "7717": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "285A": {
+          "rows": 397,
+          "start": "2024-12-18",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6723": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6526": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6963": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6875": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6981": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6976": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "6762": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        },
+        "5801": {
+          "rows": 494,
+          "start": "2024-07-29",
+          "end": "2026-08-06",
+          "missing_values": 0
+        }
+      }
+    },
+    "universe": {
+      "id": "ai-semiconductor-40",
+      "name": "AI半導体エコシステム40",
+      "requested": 40
+    }
+  },
+  "portfolio": {
+    "positions": null,
+    "exposure": null,
+    "pnl": null
+  },
+  "capital": {
+    "cash_available": null,
+    "buying_power": null,
+    "margin_usage": null,
+    "target_reserve": null,
+    "capital_state": null
+  },
+  "candidates": null,
+  "investor_dna": {
+    "native_dna": {
+      "sample_count": 394,
+      "strengths": [
+        {
+          "key": "short_horizon_repeatability",
+          "score": 92.8,
+          "sample_count": 168,
+          "evidence": {
+            "win_rate": 0.869048,
+            "profit_factor": 7.837046966049794
+          }
+        },
+        {
+          "key": "repeated_security_execution",
+          "score": 77.92,
+          "sample_count": 394,
+          "evidence": {
+            "share_of_trades_in_repeated_securities": 0.779188
+          }
+        }
+      ],
+      "limitations": [
+        "High-volatility and trend-following fit require aligned market-price features; they are not inferred from P/L alone.",
+        "Native DNA measures historical repeatability separately from current execution constraints."
+      ]
+    },
+    "risk_patterns": [
+      {
+        "security_code": "7453",
+        "security_name": "良品計画",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "CRITICAL",
+        "confidence": 0.6325,
+        "evidence": {
+          "win_rate": 0.875,
+          "profit_factor": 1.123,
+          "largest_loss": 410266.0,
+          "gross_profit": 460732.0,
+          "top1_loss_to_gross_profit": 0.890466,
+          "long_pnl": 50466.0,
+          "short_pnl": 0.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "5803",
+        "security_name": "フジクラ",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "CRITICAL",
+        "confidence": 0.7071,
+        "evidence": {
+          "win_rate": 0.9,
+          "profit_factor": 1.1709,
+          "largest_loss": 293558.0,
+          "gross_profit": 343715.0,
+          "top1_loss_to_gross_profit": 0.854074,
+          "long_pnl": 50157.0,
+          "short_pnl": 0.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "9984",
+        "security_name": "ソフトバンクグループ",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "CRITICAL",
+        "confidence": 0.6708,
+        "evidence": {
+          "win_rate": 0.777778,
+          "profit_factor": 1.0406,
+          "largest_loss": 419314.0,
+          "gross_profit": 439817.0,
+          "top1_loss_to_gross_profit": 0.953383,
+          "long_pnl": -22634.0,
+          "short_pnl": 39811.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "4204",
+        "security_name": "積水化学工業",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "WARNING",
+        "confidence": 0.4472,
+        "evidence": {
+          "win_rate": 0.75,
+          "profit_factor": 1.6931,
+          "largest_loss": 12695.0,
+          "gross_profit": 21494.0,
+          "top1_loss_to_gross_profit": 0.59063,
+          "long_pnl": 8799.0,
+          "short_pnl": 0.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "9418",
+        "security_name": "Ｕ－ＮＥＸＴ ＨＯＬＤＩＮＧＳ",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "WARNING",
+        "confidence": 0.4472,
+        "evidence": {
+          "win_rate": 0.75,
+          "profit_factor": 1.3435,
+          "largest_loss": 13141.0,
+          "gross_profit": 17655.0,
+          "top1_loss_to_gross_profit": 0.744322,
+          "long_pnl": 3519.0,
+          "short_pnl": 995.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "5574",
+        "security_name": "ＡＢＥＪＡ",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "CRITICAL",
+        "confidence": 0.6325,
+        "evidence": {
+          "win_rate": 0.75,
+          "profit_factor": 0.9334,
+          "largest_loss": 111501.0,
+          "gross_profit": 104092.0,
+          "top1_loss_to_gross_profit": 1.071177,
+          "long_pnl": -7432.0,
+          "short_pnl": 0.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "6232",
+        "security_name": "ＡＣＳＬ",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "CRITICAL",
+        "confidence": 0.5477,
+        "evidence": {
+          "win_rate": 0.833333,
+          "profit_factor": 0.7367,
+          "largest_loss": 83059.0,
+          "gross_profit": 61187.0,
+          "top1_loss_to_gross_profit": 1.357462,
+          "long_pnl": -21872.0,
+          "short_pnl": 0.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "4519",
+        "security_name": "中外製薬",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "CRITICAL",
+        "confidence": 0.3873,
+        "evidence": {
+          "win_rate": 0.666667,
+          "profit_factor": 0.6202,
+          "largest_loss": 84775.0,
+          "gross_profit": 52576.0,
+          "top1_loss_to_gross_profit": 1.612428,
+          "long_pnl": -32199.0,
+          "short_pnl": 0.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "2269",
+        "security_name": "明治ホールディングス",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "WARNING",
+        "confidence": 0.9487,
+        "evidence": {
+          "win_rate": 0.722222,
+          "profit_factor": 0.772,
+          "largest_loss": 114563.0,
+          "gross_profit": 144334.0,
+          "top1_loss_to_gross_profit": 0.793735,
+          "long_pnl": 0.0,
+          "short_pnl": -42627.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      },
+      {
+        "security_code": "3993",
+        "security_name": "ＰＫＳＨＡ Ｔｅｃｈｎｏｌｏｇｙ",
+        "pattern_code": "TAIL_LOSS_DESTROYS_SMALL_WINS",
+        "severity": "CRITICAL",
+        "confidence": 0.6325,
+        "evidence": {
+          "win_rate": 0.75,
+          "profit_factor": 0.6313,
+          "largest_loss": 80678.0,
+          "gross_profit": 75821.0,
+          "top1_loss_to_gross_profit": 1.064059,
+          "long_pnl": -44280.0,
+          "short_pnl": 0.0
+        },
+        "explanation": "High win frequency is being offset by concentrated tail loss. Review position size, stop policy and long/short asymmetry rather than treating win rate alone as edge."
+      }
+    ]
+  },
+  "events": {
+    "earnings": null,
+    "economic": null,
+    "company": null
+  },
+  "watchlist": null
+}
