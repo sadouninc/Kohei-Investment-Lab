@@ -16,12 +16,22 @@ def load_json_source(path: Path | None) -> dict[str, Any] | list[Any] | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _source_record(name: str, value: Any, *, source: str | None = None, as_of: str | None = None) -> dict[str, Any]:
+def _source_record(
+    name: str,
+    value: Any,
+    *,
+    source_reference: str | None = None,
+    as_of: str | None = None,
+    status: str | None = None,
+    reason: str | None = None,
+) -> dict[str, Any]:
     return {
         "name": name,
-        "source": source,
+        "source": source_reference,
+        "source_reference": source_reference,
         "as_of": as_of,
-        "status": "OK" if value is not None else "MISSING",
+        "status": status or ("OK" if value is not None else "MISSING"),
+        "reason": reason,
     }
 
 
@@ -89,22 +99,51 @@ def build_dataset(
             payload[key] = deepcopy(value)
 
     metadata = source_metadata or {}
-    payload["source_status"] = [
-        _source_record(
-            key,
-            value,
-            source=metadata.get(key, {}).get("source"),
-            as_of=metadata.get(key, {}).get("as_of"),
+    payload["source_status"] = []
+    for key, value in supplied.items():
+        row = metadata.get(key, {})
+        payload["source_status"].append(
+            _source_record(
+                key,
+                value,
+                source_reference=row.get("source_reference") or row.get("source"),
+                as_of=row.get("as_of"),
+                status=row.get("status"),
+                reason=row.get("reason"),
+            )
         )
-        for key, value in supplied.items()
-    ]
+
     payload["data_quality"] = _quality(payload["source_status"])
     payload["warnings"] = [
-        f"{row['name']} source is missing"
+        f"{row['name']} source is {row['status'].lower()}"
+        + (f": {row['reason']}" if row.get("reason") else "")
         for row in payload["source_status"]
-        if row["status"] == "MISSING"
+        if row["status"] != "OK"
     ]
     return validate_dataset(payload)
+
+
+def build_dataset_from_providers(
+    providers: list[Any],
+    *,
+    generated_at: datetime | None = None,
+    as_of: date | None = None,
+) -> dict[str, Any]:
+    """Collect deterministic providers and build a Morning Dataset.
+
+    Import is local to keep the existing direct JSON path lightweight and to
+    avoid making generator.py depend on concrete provider implementations.
+    """
+    from .providers import collect_providers, dataset_inputs
+
+    results = collect_providers(providers)
+    values, metadata = dataset_inputs(results)
+    return build_dataset(
+        generated_at=generated_at,
+        as_of=as_of,
+        source_metadata=metadata,
+        **values,
+    )
 
 
 def write_dataset(payload: dict[str, Any], output: Path) -> Path:
