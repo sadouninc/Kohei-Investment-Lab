@@ -1,8 +1,15 @@
 data/private/**
 !data/private/.gitkeep
 
-data/database/**
+# Decision OS database policy
+# master.db and history.db are versioned research assets.
+data/database/*
 !data/database/.gitkeep
+!data/database/master.db
+!data/database/history.db
+# High-volume/reproducible analysis data stays local.
+data/database/analysis.db
+data/database/analysis.db-*
 
 data/generated/**
 !data/generated/.gitkeep
@@ -13,6 +20,8 @@ data/generated/public/**
 *.sqlite
 *.sqlite3
 *.db
+!data/database/master.db
+!data/database/history.db
 *.db-journal
 *.db-wal
 *.db-shm
@@ -30,5 +39,4 @@ venv/
 
 # GitHub Pages build output
 site-src/
-
 
