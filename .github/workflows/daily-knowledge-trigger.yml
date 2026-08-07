@@ -18,11 +18,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  capture:
+  capture-and-plan:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issues' && github.event.label.name == 'daily-knowledge')
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5' }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v6
@@ -35,7 +38,7 @@ jobs:
           fixture="${{ inputs.event_fixture }}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ -z "$fixture" ]]; then
-              echo "workflow_dispatch requires event_fixture for PR1 validation"
+              echo "workflow_dispatch requires event_fixture for validation"
               exit 1
             fi
             if [[ ! -f "$fixture" ]]; then
@@ -48,7 +51,10 @@ jobs:
           fi
 
       - name: Run unit tests
-        run: python3 -m unittest tests.test_daily_knowledge_capture
+        run: |
+          python3 -m unittest \
+            tests.test_daily_knowledge_capture \
+            tests.test_daily_knowledge_planner
 
       - name: Capture daily-knowledge issue
         run: |
@@ -56,7 +62,16 @@ jobs:
             --event "${{ steps.event.outputs.path }}" \
             --output-dir data/generated/diagnostics/daily-knowledge
 
-      - name: Verify diagnostic
+      - name: Resolve capture path
+        id: capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          path="$(find data/generated/diagnostics/daily-knowledge -maxdepth 1 -type f -name 'issue-*.json' -print -quit)"
+          test -n "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      - name: Verify capture diagnostic
         shell: bash
         run: |
           set -euo pipefail
@@ -73,7 +88,32 @@ jobs:
           print('captured issue:', payload['issue']['number'], payload['issue']['title'])
           PY
 
-      - name: Upload capture diagnostic
+      - name: Generate AI integration plan
+        run: |
+          python3 scripts/daily_knowledge_planner.py \
+            --input "${{ steps.capture.outputs.path }}" \
+            --output data/generated/diagnostics/daily-knowledge/integration-plan.json
+
+      - name: Verify integration plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('data/generated/diagnostics/daily-knowledge/integration-plan.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          assert payload['status'] == 'PLANNED', payload
+          assert payload['next_stage'] == 'trade-journal-integrator', payload
+          assert payload['plan']['schema_version'] == 1, payload
+          assert payload['plan']['routing']['primary_target'] == '01_Portfolio/Transactions', payload
+          print('planned issue:', payload['issue']['number'])
+          print('trade journal update:', payload['plan']['trade_journal']['update'])
+          print('unresolved:', len(payload['plan']['unresolved']))
+          PY
+
+      - name: Upload Daily Knowledge diagnostics
         uses: actions/upload-artifact@v4
         with:
           name: daily-knowledge-issue-${{ github.event.issue.number || github.run_id }}
