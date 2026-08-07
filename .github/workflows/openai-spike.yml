@@ -1,0 +1,38 @@
+name: OpenAI API Spike
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install OpenAI SDK
+        run: python -m pip install --upgrade openai
+
+      - name: Call OpenAI Responses API
+        run: python scripts/openai_spike.py
+
+      - name: Upload connectivity result
+        uses: actions/upload-artifact@v4
+        with:
+          name: openai-api-test
+          path: data/generated/openai/api-test.json
+          if-no-files-found: error
+          retention-days: 7
