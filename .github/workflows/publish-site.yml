@@ -10,11 +10,13 @@ on:
       - "02_Themes/**"
       - "03_Companies/**"
       - "04_Market/**"
+      - "05_Daily_Reports/**"
       - "06_Research/Architecture/**"
       - "data/market/**"
       - "data/masters/**"
       - "data/config/**"
       - "data/generated/public/trade-analysis-summary.json"
+      - "data/generated/diagnostics/openai/**"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
@@ -23,6 +25,7 @@ on:
       - ".github/pages/**"
       - ".github/workflows/publish-site.yml"
       - ".github/workflows/update-market-phase.yml"
+      - ".github/workflows/ai-morning-analyst.yml"
   pull_request:
     paths:
       - "00_Framework/**"
@@ -30,11 +33,13 @@ on:
       - "02_Themes/**"
       - "03_Companies/**"
       - "04_Market/**"
+      - "05_Daily_Reports/**"
       - "06_Research/Architecture/**"
       - "data/market/**"
       - "data/masters/**"
       - "data/config/**"
       - "data/generated/public/trade-analysis-summary.json"
+      - "data/generated/diagnostics/openai/**"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
@@ -43,6 +48,7 @@ on:
       - ".github/pages/**"
       - ".github/workflows/publish-site.yml"
       - ".github/workflows/update-market-phase.yml"
+      - ".github/workflows/ai-morning-analyst.yml"
   schedule:
     # 23:40 UTC Sunday-Thursday = 08:40 JST Monday-Friday.
     - cron: "40 23 * * 0-4"
@@ -93,6 +99,9 @@ jobs:
       - name: Publish Morning Dataset diagnostics
         run: python3 .github/pages/build_morning_dataset.py
 
+      - name: Publish AI Morning Reports
+        run: python3 .github/pages/build_ai_morning_reports.py
+
       - name: Verify generated routes
         shell: bash
         run: |
@@ -107,6 +116,7 @@ jobs:
           test -f site-src/research/investor-dna/index.md
           test -f site-src/research/morning-dataset/index.md
           test -f site-src/research/morning-dataset/morning-dataset.json
+          test -f site-src/reports/morning/index.md
           test -f data/generated/public/morning-dataset.json
           test -f site-src/architecture/index.md
           test -f site-src/architecture/investment-decision-os-data-model/index.md
@@ -128,6 +138,8 @@ jobs:
           grep -q "Lifetime Profit Contribution" site-src/research/investor-dna/index.md
           grep -q "Morning Dataset Diagnostics" site-src/research/morning-dataset/index.md
           grep -q '"schema_version": "1.0"' site-src/research/morning-dataset/morning-dataset.json
+          grep -q "AI Morning Reports" site-src/reports/morning/index.md
+          grep -q "AI Morning Reports" site-src/index.md
           grep -q "Investor DNA" site-src/index.md
           grep -q "Morning Dataset" site-src/index.md
           grep -q "Investment Decision OS Data Model" site-src/architecture/index.md
@@ -172,6 +184,8 @@ jobs:
           test -f _site/research/morning-dataset/morning-dataset.json
           grep -q "Morning Dataset Diagnostics" _site/research/morning-dataset/index.html
           grep -q '"schema_version": "1.0"' _site/research/morning-dataset/morning-dataset.json
+          test -f _site/reports/morning/index.html
+          grep -q "AI Morning Reports" _site/reports/morning/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
