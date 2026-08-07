@@ -1,0 +1,73 @@
+name: AI Morning Analyst
+
+on:
+  schedule:
+    # 23:45 UTC Sunday-Thursday = 08:45 JST Monday-Friday.
+    - cron: "45 23 * * 0-4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-morning-analyst
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5' }}
+      OPENAI_INPUT_COST_PER_MILLION: ${{ vars.OPENAI_INPUT_COST_PER_MILLION }}
+      OPENAI_OUTPUT_COST_PER_MILLION: ${{ vars.OPENAI_OUTPUT_COST_PER_MILLION }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Generate market phase report
+        run: python3 -m scripts.market_phase.pipeline
+
+      - name: Generate Investor DNA v2 report
+        run: python3 scripts/investor_dna_v2.py
+
+      - name: Generate Morning Dataset
+        run: |
+          python3 scripts/generate_morning_dataset.py \
+            --market data/generated/public/market-phase/ai-semiconductor.json \
+            --investor-dna data/generated/public/investor-dna.json
+
+      - name: Generate AI Morning Report
+        run: python3 scripts/ai_morning_analyst.py
+
+      - name: Verify generated report
+        shell: bash
+        run: |
+          set -euo pipefail
+          day="$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('data/generated/public/morning-dataset.json').read_text())
+          print(data['as_of'])
+          PY
+          )"
+          test -f "05_Daily_Reports/Morning/${day}.md"
+          test -f "data/generated/diagnostics/openai/${day}.json"
+          grep -q "# AI Morning Report" "05_Daily_Reports/Morning/${day}.md"
+          grep -q '"status": "OK"' "data/generated/diagnostics/openai/${day}.json"
+
+      - name: Commit report and diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 05_Daily_Reports/Morning data/generated/diagnostics/openai
+          if git diff --cached --quiet; then
+            echo "No report changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: add AI morning report $(date -u +%F)"
+          git push origin HEAD:main
