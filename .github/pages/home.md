@@ -44,6 +44,10 @@ permalink: /
       <strong>Market Phase</strong>
       <span>AI半導体40銘柄の相関・自動クラスタ・先行遅行候補を調べる</span>
     </a>
+    <a class="nav-card" href="{{ '/architecture/' | relative_url }}">
+      <strong>Architecture</strong>
+      <span>Investment Decision OS と分析基盤の設計ドキュメントを読む</span>
+    </a>
     <a class="nav-card" href="{{ '/trade-journal/' | relative_url }}">
       <strong>Trade Journal</strong>
       <span>市場認識・投資判断・売買・反省・改善を時系列で読む</span>
