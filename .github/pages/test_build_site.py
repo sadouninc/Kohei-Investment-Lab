@@ -44,6 +44,7 @@ class TradeJournalBuildTest(unittest.TestCase):
             "原油・物流コスト",
         ):
             self.assertIn(expected, page)
+
     def test_2026_08_04_content_is_published_without_false_empty_messages(self) -> None:
         page = self.page("2026-08-04")
 
@@ -76,6 +77,29 @@ class TradeJournalBuildTest(unittest.TestCase):
             "## Investment Ideas",
             "日東紡",
             "Glass Core",
+            "## Reflection",
+            "## Lessons Learned",
+            "## Next Scenario",
+        ):
+            self.assertIn(expected, page)
+
+    def test_2026_08_07_trade_journal_is_published(self) -> None:
+        page = self.page("2026-08-07")
+
+        for expected in (
+            "## Market",
+            "## Market Recognition",
+            "## Today's Trades",
+            "テラドローン",
+            "11,900円",
+            "12,150円",
+            "ソフトバンクグループ",
+            "オンコリスバイオファーマ",
+            "積水化学工業",
+            "失効 / 未約定",
+            "約 +58,000円",
+            "Investor DNA",
+            "信用買残の増減 × 株価反応",
             "## Reflection",
             "## Lessons Learned",
             "## Next Scenario",
@@ -183,7 +207,6 @@ class TradeJournalBuildTest(unittest.TestCase):
             self.assertIn(expected, page)
         self.assertIn("3110-nittobo", index)
 
-
     def test_market_analysis_page_and_index_are_published(self) -> None:
         build_site.build_market_analysis()
         page = (
@@ -223,5 +246,3 @@ class TradeJournalBuildTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
