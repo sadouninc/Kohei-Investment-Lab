@@ -36,8 +36,24 @@ jobs:
       - name: Generate Morning Dataset
         run: |
           python3 scripts/generate_morning_dataset.py \
-            --market data/generated/public/market-phase/ai-semiconductor.json \
+            --live-market \
             --investor-dna data/generated/public/investor-dna.json
+
+      - name: Verify market source is explicit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          payload=json.loads(Path('data/generated/public/morning-dataset.json').read_text())
+          row=next(row for row in payload['source_status'] if row['name']=='market')
+          assert row['status'] in {'OK','PARTIAL','MISSING'}, row
+          if row['status'] != 'MISSING':
+              assert payload['market']['indices'], payload['market']
+              assert row.get('source_reference'), row
+          print('market source:', row['status'], row.get('as_of'), row.get('reason'))
+          PY
 
       - name: Test context optimizer
         run: python3 -m unittest tests.test_context_optimizer
