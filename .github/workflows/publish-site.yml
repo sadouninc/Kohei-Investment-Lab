@@ -10,6 +10,7 @@ on:
       - "02_Themes/**"
       - "03_Companies/**"
       - "04_Market/**"
+      - "06_Research/Architecture/**"
       - "data/market/**"
       - "data/masters/**"
       - "data/generated/public/trade-analysis-summary.json"
@@ -27,6 +28,7 @@ on:
       - "02_Themes/**"
       - "03_Companies/**"
       - "04_Market/**"
+      - "06_Research/Architecture/**"
       - "data/market/**"
       - "data/masters/**"
       - "data/generated/public/trade-analysis-summary.json"
@@ -67,6 +69,9 @@ jobs:
       - name: Prepare site
         run: python3 .github/pages/build_site.py
 
+      - name: Publish architecture docs
+        run: python3 .github/pages/build_architecture.py
+
       - name: Verify generated routes
         shell: bash
         run: |
@@ -78,6 +83,8 @@ jobs:
           test -f site-src/market-analysis/index.md
           test -f site-src/market-analysis/2026/2026-08-05/index.md
           test -f site-src/research/market-phase/ai-semiconductor/index.md
+          test -f site-src/architecture/index.md
+          test -f site-src/architecture/investment-decision-os-data-model/index.md
           test -f site-src/trade-journal/index.md
           test -f site-src/trade-analysis/index.md
           test -f site-src/trade-journal/2026/08/2026-08-03/index.md
@@ -90,6 +97,9 @@ jobs:
           grep -q "2026-08-05" site-src/market-analysis/index.md
           grep -q "Sado Market Phase Analyzer" site-src/research/market-phase/ai-semiconductor/index.md
           grep -q "phase-data" site-src/research/market-phase/ai-semiconductor/index.md
+          grep -q "Investment Decision OS Data Model" site-src/architecture/index.md
+          grep -q "FACT / OBSERVATION" site-src/architecture/investment-decision-os-data-model/index.md
+          grep -q "Architecture" site-src/index.md
           test -f assets/images/market-analysis/2026/nikkei-daily-decline-factors-2026-08-05.jpg
           grep -q "data:image/jpeg;base64," site-src/market-analysis/2026/2026-08-05/index.md
           grep -q "2026-08-03" site-src/trade-journal/index.md
@@ -120,6 +130,8 @@ jobs:
           set -euo pipefail
           grep -q "data:image/jpeg;base64," \
             _site/market-analysis/2026/2026-08-05/index.html
+          test -f _site/architecture/index.html
+          test -f _site/architecture/investment-decision-os-data-model/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
@@ -135,4 +147,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-
