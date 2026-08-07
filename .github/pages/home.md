@@ -48,6 +48,10 @@ permalink: /
       <strong>Investor DNA</strong>
       <span>実取引から「なぜこの銘柄で勝てる／勝てないか」を原因分解する</span>
     </a>
+    <a class="nav-card" href="{{ '/research/morning-dataset/' | relative_url }}">
+      <strong>Morning Dataset</strong>
+      <span>AI判断前にGitHub Actions / Pythonが準備したFact・Featureとデータ鮮度を確認する</span>
+    </a>
     <a class="nav-card" href="{{ '/architecture/' | relative_url }}">
       <strong>Architecture</strong>
       <span>Investment Decision OS と分析基盤の設計ドキュメントを読む</span>
