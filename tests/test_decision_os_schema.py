@@ -39,6 +39,11 @@ EXPECTED_HISTORY_TABLES = {
     "outcomes",
     "missed_opportunities",
     "daily_reviews",
+    "investor_dna_profiles",
+    "security_behavior_profiles",
+    "compatibility_assessments",
+    "compatibility_factors",
+    "strategy_experiments",
 }
 
 EXPECTED_ANALYSIS_TABLES = {
@@ -68,8 +73,13 @@ class DecisionOSSchemaTest(unittest.TestCase):
             first = migrate_all(db_dir)
             second = migrate_all(db_dir)
 
+            self.assertEqual(["001_master_schema.sql"], first["master"][1])
+            self.assertEqual(
+                ["001_history_schema.sql", "002_investor_dna.sql"],
+                first["history"][1],
+            )
+            self.assertEqual(["001_analysis_schema.sql"], first["analysis"][1])
             for name in TARGETS:
-                self.assertEqual(["001_%s_schema.sql" % name], first[name][1])
                 self.assertEqual([], second[name][1])
 
             self.assertTrue(EXPECTED_MASTER_TABLES.issubset(tables(db_dir / "master.db")))
