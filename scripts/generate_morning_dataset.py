@@ -9,12 +9,19 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.morning_dataset.generator import build_dataset, load_json_source, write_dataset
+from scripts.morning_dataset.generator import (
+    build_dataset,
+    build_dataset_from_providers,
+    load_json_source,
+    write_dataset,
+)
+from scripts.morning_dataset.providers import JsonFileProvider, MarketProvider
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Morning Dataset v1")
     parser.add_argument("--market")
+    parser.add_argument("--live-market", action="store_true", help="collect the public market snapshot via MarketProvider")
     parser.add_argument("--portfolio")
     parser.add_argument("--capital")
     parser.add_argument("--candidates")
@@ -24,20 +31,45 @@ def main() -> None:
     parser.add_argument("--output", default="data/generated/public/morning-dataset.json")
     args = parser.parse_args()
 
-    def read(value: str | None):
-        return load_json_source(Path(value)) if value else None
+    if args.live_market and args.market:
+        parser.error("--live-market and --market are mutually exclusive")
 
-    dataset = build_dataset(
-        market=read(args.market),
-        portfolio=read(args.portfolio),
-        capital=read(args.capital),
-        candidates=read(args.candidates),
-        investor_dna=read(args.investor_dna),
-        events=read(args.events),
-        watchlist=read(args.watchlist),
-    )
+    source_paths = {
+        "market": args.market,
+        "portfolio": args.portfolio,
+        "capital": args.capital,
+        "candidates": args.candidates,
+        "investor_dna": args.investor_dna,
+        "events": args.events,
+        "watchlist": args.watchlist,
+    }
+
+    if args.live_market:
+        providers = [MarketProvider()]
+        providers.extend(
+            JsonFileProvider(name, Path(path))
+            for name, path in source_paths.items()
+            if name != "market" and path
+        )
+        dataset = build_dataset_from_providers(providers)
+    else:
+        def read(value: str | None):
+            return load_json_source(Path(value)) if value else None
+
+        dataset = build_dataset(
+            market=read(args.market),
+            portfolio=read(args.portfolio),
+            capital=read(args.capital),
+            candidates=read(args.candidates),
+            investor_dna=read(args.investor_dna),
+            events=read(args.events),
+            watchlist=read(args.watchlist),
+        )
+
     path = write_dataset(dataset, Path(args.output))
     print(f"Morning Dataset: {path}")
+    quality = dataset.get("data_quality") or {}
+    print(f"Completeness: {quality.get('completeness_count', '—')} / status={quality.get('status', '—')}")
 
 
 if __name__ == "__main__":
