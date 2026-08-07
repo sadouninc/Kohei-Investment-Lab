@@ -11,11 +11,13 @@ import time
 from typing import Any
 from urllib import request, error
 
+from scripts.morning_dataset.context_optimizer import optimize_dataset
+
 API_URL = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5")
 
 SYSTEM_PROMPT = """You are the AI Morning Analyst for Sado Investment Lab.
-Use only the supplied Morning Dataset as factual input.
+Use only the supplied optimized Morning Dataset as factual input.
 Never invent missing market data, prices, events, portfolio facts, or news.
 Clearly distinguish facts from interpretation.
 If data quality is PARTIAL, MISSING, or STALE, say so prominently.
@@ -51,7 +53,7 @@ def extract_output_text(payload: dict[str, Any]) -> str:
 
 def call_openai(dataset: dict[str, Any], *, model: str, api_key: str, timeout: int = 120) -> tuple[str, dict[str, Any], float]:
     user_input = (
-        "Analyze the following Morning Dataset JSON. Preserve null/MISSING/PARTIAL as uncertainty.\n\n"
+        "Analyze the following optimized Morning Dataset JSON. Preserve null/MISSING/PARTIAL as uncertainty.\n\n"
         + json.dumps(dataset, ensure_ascii=False, separators=(",", ":"))
     )
     body = {
@@ -103,7 +105,7 @@ def render_report(ai_markdown: str, dataset: dict[str, Any], model: str) -> str:
         f"dataset_as_of: {dataset.get('as_of')}\n"
         f"dataset_status: {quality.get('status')}\n"
         f"model: {model}\n"
-        "source: OpenAI Responses API + Morning Dataset\n"
+        "source: OpenAI Responses API + optimized Morning Dataset\n"
         "---\n\n"
     )
     return meta + ai_markdown.strip() + "\n"
@@ -114,6 +116,7 @@ def main() -> None:
     parser.add_argument("--input", default="data/generated/public/morning-dataset.json")
     parser.add_argument("--report-dir", default="05_Daily_Reports/Morning")
     parser.add_argument("--diagnostics-dir", default="data/generated/diagnostics/openai")
+    parser.add_argument("--optimized-output", default="data/generated/diagnostics/openai/optimized-morning-dataset.json")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     args = parser.parse_args()
 
@@ -124,7 +127,15 @@ def main() -> None:
     input_path = Path(args.input)
     dataset = json.loads(input_path.read_text(encoding="utf-8"))
     dataset_bytes = input_path.read_bytes()
-    report_text, response, elapsed = call_openai(dataset, model=args.model, api_key=api_key)
+    optimized, optimization = optimize_dataset(dataset)
+    if optimization["status"] != "OK":
+        raise RuntimeError("Context optimizer could not reduce the Morning Dataset below the hard cap")
+
+    optimized_path = Path(args.optimized_output)
+    optimized_path.parent.mkdir(parents=True, exist_ok=True)
+    optimized_path.write_text(json.dumps(optimized, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    report_text, response, elapsed = call_openai(optimized, model=args.model, api_key=api_key)
 
     day = str(dataset.get("as_of") or datetime.now().astimezone().date())
     report_path = Path(args.report_dir) / f"{day}.md"
@@ -147,6 +158,8 @@ def main() -> None:
         "total_tokens": usage.get("total_tokens"),
         "estimated_cost_usd": estimated_cost,
         "cost_basis": cost_basis,
+        "context_optimization": optimization,
+        "optimized_dataset_path": str(optimized_path),
         "report_path": str(report_path),
         "status": "OK",
     }
@@ -156,6 +169,11 @@ def main() -> None:
 
     print(f"AI Morning Report: {report_path}")
     print(f"Diagnostics: {diagnostics_path}")
+    print(
+        "Context: "
+        f"{optimization['raw_dataset_chars']} -> {optimization['optimized_prompt_chars']} chars "
+        f"({optimization['reduction_ratio']:.1%} reduction; ~{optimization['estimated_input_tokens']} tokens)"
+    )
     print(f"Model: {diagnostics['model']}; tokens: {diagnostics['total_tokens']}")
 
 
