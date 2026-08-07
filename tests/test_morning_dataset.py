@@ -22,6 +22,8 @@ class MorningDatasetTest(unittest.TestCase):
         )
         self.assertEqual("1.0", payload["schema_version"])
         self.assertEqual("MISSING", payload["data_quality"]["status"])
+        self.assertEqual("0 / 7", payload["data_quality"]["completeness_label"])
+        self.assertEqual(7, payload["data_quality"]["source_counts"]["MISSING"])
         self.assertIsNone(payload["capital"]["buying_power"])
         self.assertTrue(payload["warnings"])
 
@@ -38,6 +40,7 @@ class MorningDatasetTest(unittest.TestCase):
         self.assertEqual(dna, payload["investor_dna"])
         self.assertNotIn("recommendation", payload)
         self.assertEqual("PARTIAL", payload["data_quality"]["status"])
+        self.assertEqual("2 / 7", payload["data_quality"]["completeness_label"])
 
     def test_all_sources_produce_ok_quality(self) -> None:
         payload = build_dataset(
@@ -45,6 +48,51 @@ class MorningDatasetTest(unittest.TestCase):
         )
         self.assertEqual("OK", payload["data_quality"]["status"])
         self.assertEqual(1.0, payload["data_quality"]["completeness"])
+        self.assertEqual("7 / 7", payload["data_quality"]["completeness_label"])
+        self.assertEqual(7, payload["data_quality"]["source_counts"]["OK"])
+
+    def test_partial_and_stale_sources_are_visible_but_not_counted_as_complete(self) -> None:
+        payload = build_dataset(
+            market={"indices": {"nikkei": 1}},
+            portfolio={"positions": []},
+            source_metadata={
+                "market": {
+                    "status": "STALE",
+                    "as_of": "2026-08-06T15:30:00+09:00",
+                    "source_reference": "market.json",
+                    "reason": "previous trading day snapshot",
+                },
+                "portfolio": {
+                    "status": "PARTIAL",
+                    "as_of": "2026-08-07T08:30:00+09:00",
+                    "source_reference": "Current_Status.md",
+                    "reason": "buying power unavailable",
+                },
+            },
+        )
+        quality = payload["data_quality"]
+        self.assertEqual("0 / 7", quality["completeness_label"])
+        self.assertEqual(2, quality["usable_sources"])
+        self.assertEqual(1, quality["source_counts"]["STALE"])
+        self.assertEqual(1, quality["source_counts"]["PARTIAL"])
+        self.assertEqual("PARTIAL", quality["status"])
+        self.assertIn("previous trading day snapshot", payload["warnings"][0])
+
+    def test_source_status_preserves_reason_and_reference(self) -> None:
+        payload = build_dataset(
+            investor_dna={"native_dna": {"type": "MOMENTUM"}},
+            source_metadata={
+                "investor_dna": {
+                    "status": "OK",
+                    "as_of": "2026-08-07T07:00:00+09:00",
+                    "source_reference": "data/generated/investor-dna.json",
+                }
+            },
+        )
+        row = next(item for item in payload["source_status"] if item["name"] == "investor_dna")
+        self.assertEqual("data/generated/investor-dna.json", row["source_reference"])
+        self.assertEqual("2026-08-07T07:00:00+09:00", row["as_of"])
+        self.assertIsNone(row["reason"])
 
     def test_validator_rejects_bad_schema(self) -> None:
         payload = build_dataset()
