@@ -13,10 +13,12 @@ on:
       - "06_Research/Architecture/**"
       - "data/market/**"
       - "data/masters/**"
+      - "data/config/**"
       - "data/generated/public/trade-analysis-summary.json"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
+      - "database/migrations/**"
       - "assets/images/**"
       - ".github/pages/**"
       - ".github/workflows/publish-site.yml"
@@ -31,10 +33,12 @@ on:
       - "06_Research/Architecture/**"
       - "data/market/**"
       - "data/masters/**"
+      - "data/config/**"
       - "data/generated/public/trade-analysis-summary.json"
       - "08_Trade_Analysis/**"
       - "scripts/**"
       - "tests/**"
+      - "database/migrations/**"
       - "assets/images/**"
       - ".github/pages/**"
       - ".github/workflows/publish-site.yml"
@@ -60,6 +64,9 @@ jobs:
       - name: Generate market phase report
         run: python3 -m scripts.market_phase.pipeline
 
+      - name: Generate Investor DNA v2 report
+        run: python3 scripts/investor_dna_v2.py
+
       - name: Test Trade Journal mapping
         run: python3 -m unittest discover -s .github/pages -p "test_*.py"
 
@@ -72,6 +79,9 @@ jobs:
       - name: Publish architecture docs
         run: python3 .github/pages/build_architecture.py
 
+      - name: Publish Investor DNA
+        run: python3 .github/pages/build_investor_dna.py
+
       - name: Verify generated routes
         shell: bash
         run: |
@@ -83,6 +93,7 @@ jobs:
           test -f site-src/market-analysis/index.md
           test -f site-src/market-analysis/2026/2026-08-05/index.md
           test -f site-src/research/market-phase/ai-semiconductor/index.md
+          test -f site-src/research/investor-dna/index.md
           test -f site-src/architecture/index.md
           test -f site-src/architecture/investment-decision-os-data-model/index.md
           test -f site-src/trade-journal/index.md
@@ -97,6 +108,11 @@ jobs:
           grep -q "2026-08-05" site-src/market-analysis/index.md
           grep -q "Sado Market Phase Analyzer" site-src/research/market-phase/ai-semiconductor/index.md
           grep -q "phase-data" site-src/research/market-phase/ai-semiconductor/index.md
+          grep -q "Investor DNA Engine" site-src/research/investor-dna/index.md
+          grep -q "Native DNA" site-src/research/investor-dna/index.md
+          grep -q "Current Environment Fit" site-src/research/investor-dna/index.md
+          grep -q "Lifetime Profit Contribution" site-src/research/investor-dna/index.md
+          grep -q "Investor DNA" site-src/index.md
           grep -q "Investment Decision OS Data Model" site-src/architecture/index.md
           grep -q "FACT / OBSERVATION" site-src/architecture/investment-decision-os-data-model/index.md
           grep -q "Architecture" site-src/index.md
@@ -124,7 +140,7 @@ jobs:
           source: ./site-src
           destination: ./_site
 
-      - name: Verify published market chart
+      - name: Verify published routes
         shell: bash
         run: |
           set -euo pipefail
@@ -132,6 +148,9 @@ jobs:
             _site/market-analysis/2026/2026-08-05/index.html
           test -f _site/architecture/index.html
           test -f _site/architecture/investment-decision-os-data-model/index.html
+          test -f _site/research/investor-dna/index.html
+          grep -q "Investor DNA Engine" _site/research/investor-dna/index.html
+          grep -q "Current Environment Fit" _site/research/investor-dna/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4

@@ -44,6 +44,10 @@ permalink: /
       <strong>Market Phase</strong>
       <span>AI半導体40銘柄の相関・自動クラスタ・先行遅行候補を調べる</span>
     </a>
+    <a class="nav-card" href="{{ '/research/investor-dna/' | relative_url }}">
+      <strong>Investor DNA</strong>
+      <span>実取引から「なぜこの銘柄で勝てる／勝てないか」を原因分解する</span>
+    </a>
     <a class="nav-card" href="{{ '/architecture/' | relative_url }}">
       <strong>Architecture</strong>
       <span>Investment Decision OS と分析基盤の設計ドキュメントを読む</span>
