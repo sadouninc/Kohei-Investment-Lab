@@ -21,10 +21,20 @@ def fmt(value: object) -> str:
     return esc(value)
 
 
+def status_badge(status: object) -> str:
+    normalized = str(status or "MISSING").upper()
+    return f'<span class="status-badge status-{normalized.lower()}">{esc(normalized)}</span>'
+
+
 def build_page(payload: dict) -> str:
     quality = payload.get("data_quality") or {}
     sources = payload.get("source_status") or []
     warnings = payload.get("warnings") or []
+
+    ok_sources = quality.get("ok_sources", quality.get("available_sources", 0))
+    total_sources = quality.get("total_sources", len(sources))
+    completeness_label = quality.get("completeness_label") or f"{ok_sources} / {total_sources}"
+    source_counts = quality.get("source_counts") or {}
 
     page = """---
 layout: site
@@ -48,19 +58,34 @@ permalink: /research/morning-dataset/
         f'<div class="metric-card"><span>Schema</span><strong>{esc(payload.get("schema_version", "—"))}</strong></div>'
         f'<div class="metric-card"><span>As of</span><strong>{esc(payload.get("as_of", "—"))}</strong></div>'
         f'<div class="metric-card"><span>Quality</span><strong>{esc(quality.get("status", "—"))}</strong></div>'
-        f'<div class="metric-card"><span>Completeness</span><strong>{fmt(quality.get("completeness"))}</strong></div>'
+        f'<div class="metric-card"><span>Completeness</span><strong>{esc(completeness_label)}</strong><small>{fmt(quality.get("completeness"))}</small></div>'
         '</div>\n\n'
     )
 
+    page += (
+        "<p><strong>Source counts:</strong> "
+        f"OK {source_counts.get('OK', 0)} / "
+        f"PARTIAL {source_counts.get('PARTIAL', 0)} / "
+        f"STALE {source_counts.get('STALE', 0)} / "
+        f"MISSING {source_counts.get('MISSING', 0)}</p>\n\n"
+    )
+
     page += "## Source Status\n\n"
-    page += "| Source | Status | As of | Source reference |\n|---|---|---|---|\n"
+    page += "| Source | Status | As of | Source reference | Reason |\n|---|---|---|---|---|\n"
     for row in sources:
+        source_reference = row.get("source_reference") or row.get("source") or "—"
         page += (
-            f'| {esc(row.get("name", "—"))} | **{esc(row.get("status", "—"))}** | '
-            f'{esc(row.get("as_of") or "—")} | {esc(row.get("source") or "—")} |\n'
+            f'| {esc(row.get("name", "—"))} | {status_badge(row.get("status"))} | '
+            f'{esc(row.get("as_of") or "—")} | {esc(source_reference)} | '
+            f'{esc(row.get("reason") or "—")} |\n'
         )
 
-    page += "\n## Warnings\n\n"
+    page += (
+        "\n`OK` は当日判断に利用可能、`PARTIAL` は一部不足、`STALE` は値はあるが鮮度不足、"
+        "`MISSING` は利用可能な入力がない状態です。Completeness は **OK のソース数 / 全7ソース** で計算します。\n\n"
+    )
+
+    page += "## Warnings\n\n"
     if warnings:
         for warning in warnings:
             page += f"- {esc(warning)}\n"
@@ -69,9 +94,11 @@ permalink: /research/morning-dataset/
 
     page += "\n## Input Sections\n\n"
     sections = ("market", "portfolio", "capital", "candidates", "investor_dna", "events", "watchlist")
+    status_by_name = {row.get("name"): row.get("status") for row in sources}
     for key in sections:
         value = payload.get(key)
-        page += f"### {key}\n\n"
+        section_status = status_by_name.get(key, "MISSING")
+        page += f"### {key} — {section_status}\n\n"
         if value is None:
             page += "`MISSING`\n\n"
         else:
@@ -81,7 +108,7 @@ permalink: /research/morning-dataset/
     page += (
         "## Public JSON\n\n"
         "AI入力契約そのものは [`morning-dataset.json`](./morning-dataset.json) で確認できます。\n\n"
-        "不足データは0や推測値で補完せず、`null` / `MISSING` / `PARTIAL` として残します。\n"
+        "不足データは0や推測値で補完せず、`null` / `MISSING` / `PARTIAL` / `STALE` として残します。\n"
     )
     return page
 
