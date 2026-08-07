@@ -1,18 +1,41 @@
 #!/usr/bin/env python3
-"""Initialize or migrate the local Investment Decision OS SQLite database.
+"""Initialize or migrate the Investment Decision OS SQLite databases.
 
-The database itself lives under data/database/ and is intentionally ignored by
-Git. Only migration SQL and code are version controlled.
+Storage policy:
+- data/database/master.db  : Git-managed research master data
+- data/database/history.db : Git-managed accumulated research history
+- data/database/analysis.db: local-only high-volume/reproducible analysis data
+
+Migration SQL is split by database under database/migrations/<target>/.
 """
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 from pathlib import Path
 import sqlite3
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DB = ROOT / "data" / "database" / "investment.db"
-MIGRATIONS = ROOT / "database" / "migrations"
+DEFAULT_DB_DIR = ROOT / "data" / "database"
+MIGRATIONS_ROOT = ROOT / "database" / "migrations"
+
+
+@dataclass(frozen=True)
+class DatabaseTarget:
+    name: str
+    filename: str
+    git_managed: bool
+
+    @property
+    def migration_dir(self) -> Path:
+        return MIGRATIONS_ROOT / self.name
+
+
+TARGETS = {
+    "master": DatabaseTarget("master", "master.db", True),
+    "history": DatabaseTarget("history", "history.db", True),
+    "analysis": DatabaseTarget("analysis", "analysis.db", False),
+}
 
 
 def ensure_migration_table(connection: sqlite3.Connection) -> None:
@@ -39,7 +62,8 @@ def applied_versions(connection: sqlite3.Connection) -> set[str]:
     }
 
 
-def apply_migrations(db_path: Path, migration_dir: Path = MIGRATIONS) -> list[str]:
+def apply_migrations(db_path: Path, migration_dir: Path) -> list[str]:
+    """Apply one target's migrations and return migration file names applied now."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     applied_now: list[str] = []
 
@@ -70,32 +94,49 @@ def apply_migrations(db_path: Path, migration_dir: Path = MIGRATIONS) -> list[st
     return applied_now
 
 
+def database_path(target: DatabaseTarget, db_dir: Path = DEFAULT_DB_DIR) -> Path:
+    return db_dir / target.filename
+
+
+def migrate_target(target_name: str, db_dir: Path = DEFAULT_DB_DIR) -> tuple[Path, list[str]]:
+    target = TARGETS[target_name]
+    path = database_path(target, db_dir)
+    applied = apply_migrations(path, target.migration_dir)
+    return path, applied
+
+
+def migrate_all(db_dir: Path = DEFAULT_DB_DIR) -> dict[str, tuple[Path, list[str]]]:
+    return {name: migrate_target(name, db_dir) for name in TARGETS}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Apply Investment Decision OS SQLite migrations."
+        description="Apply split Investment Decision OS SQLite migrations."
     )
     parser.add_argument(
-        "--db",
-        type=Path,
-        default=DEFAULT_DB,
-        help=f"SQLite database path (default: {DEFAULT_DB.relative_to(ROOT)})",
+        "--target",
+        choices=["all", *TARGETS.keys()],
+        default="all",
+        help="Database to migrate (default: all).",
     )
     parser.add_argument(
-        "--migrations",
+        "--db-dir",
         type=Path,
-        default=MIGRATIONS,
-        help="Migration directory.",
+        default=DEFAULT_DB_DIR,
+        help=f"Database directory (default: {DEFAULT_DB_DIR.relative_to(ROOT)})",
     )
     args = parser.parse_args()
 
-    applied = apply_migrations(args.db, args.migrations)
-    if applied:
-        print("Applied migrations:")
-        for name in applied:
-            print(f"- {name}")
-    else:
-        print("Database schema is already up to date.")
-    print(f"Database: {args.db}")
+    names = list(TARGETS) if args.target == "all" else [args.target]
+    for name in names:
+        target = TARGETS[name]
+        path, applied = migrate_target(name, args.db_dir)
+        policy = "Git-managed" if target.git_managed else "local-only"
+        if applied:
+            print(f"[{name}] Applied migrations: {', '.join(applied)}")
+        else:
+            print(f"[{name}] Database schema is already up to date.")
+        print(f"[{name}] {policy}: {path}")
 
 
 if __name__ == "__main__":
