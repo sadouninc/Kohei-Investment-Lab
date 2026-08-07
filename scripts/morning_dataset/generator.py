@@ -37,19 +37,31 @@ def _source_record(
 
 def _quality(source_status: list[dict[str, Any]]) -> dict[str, Any]:
     total = len(source_status)
-    available = sum(row["status"] == "OK" for row in source_status)
-    completeness = 1.0 if total == 0 else available / total
-    if completeness == 1.0:
+    counts = {name: 0 for name in ("OK", "PARTIAL", "STALE", "MISSING")}
+    for row in source_status:
+        status = row["status"]
+        counts[status] = counts.get(status, 0) + 1
+
+    ok_sources = counts["OK"]
+    usable_sources = counts["OK"] + counts["PARTIAL"] + counts["STALE"]
+    completeness = 1.0 if total == 0 else ok_sources / total
+
+    if total == 0 or ok_sources == total:
         status = "OK"
-    elif completeness == 0.0:
+    elif usable_sources == 0:
         status = "MISSING"
     else:
         status = "PARTIAL"
+
     return {
         "status": status,
         "completeness": round(completeness, 4),
-        "available_sources": available,
+        "available_sources": ok_sources,
+        "ok_sources": ok_sources,
+        "usable_sources": usable_sources,
         "total_sources": total,
+        "completeness_label": f"{ok_sources} / {total}",
+        "source_counts": counts,
     }
 
 
