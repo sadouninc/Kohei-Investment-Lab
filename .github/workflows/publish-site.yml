@@ -43,6 +43,9 @@ on:
       - ".github/pages/**"
       - ".github/workflows/publish-site.yml"
       - ".github/workflows/update-market-phase.yml"
+  schedule:
+    # 23:40 UTC Sunday-Thursday = 08:40 JST Monday-Friday.
+    - cron: "40 23 * * 0-4"
   workflow_dispatch:
 
 permissions:
@@ -67,6 +70,11 @@ jobs:
       - name: Generate Investor DNA v2 report
         run: python3 scripts/investor_dna_v2.py
 
+      - name: Generate Morning Dataset
+        run: |
+          python3 scripts/generate_morning_dataset.py \
+            --investor-dna data/generated/public/investor-dna.json
+
       - name: Test Trade Journal mapping
         run: python3 -m unittest discover -s .github/pages -p "test_*.py"
 
@@ -82,6 +90,9 @@ jobs:
       - name: Publish Investor DNA
         run: python3 .github/pages/build_investor_dna.py
 
+      - name: Publish Morning Dataset diagnostics
+        run: python3 .github/pages/build_morning_dataset.py
+
       - name: Verify generated routes
         shell: bash
         run: |
@@ -94,6 +105,9 @@ jobs:
           test -f site-src/market-analysis/2026/2026-08-05/index.md
           test -f site-src/research/market-phase/ai-semiconductor/index.md
           test -f site-src/research/investor-dna/index.md
+          test -f site-src/research/morning-dataset/index.md
+          test -f site-src/research/morning-dataset/morning-dataset.json
+          test -f data/generated/public/morning-dataset.json
           test -f site-src/architecture/index.md
           test -f site-src/architecture/investment-decision-os-data-model/index.md
           test -f site-src/trade-journal/index.md
@@ -112,7 +126,10 @@ jobs:
           grep -q "Native DNA" site-src/research/investor-dna/index.md
           grep -q "Current Environment Fit" site-src/research/investor-dna/index.md
           grep -q "Lifetime Profit Contribution" site-src/research/investor-dna/index.md
+          grep -q "Morning Dataset Diagnostics" site-src/research/morning-dataset/index.md
+          grep -q '"schema_version": "1.0"' site-src/research/morning-dataset/morning-dataset.json
           grep -q "Investor DNA" site-src/index.md
+          grep -q "Morning Dataset" site-src/index.md
           grep -q "Investment Decision OS Data Model" site-src/architecture/index.md
           grep -q "FACT / OBSERVATION" site-src/architecture/investment-decision-os-data-model/index.md
           grep -q "Architecture" site-src/index.md
@@ -151,6 +168,10 @@ jobs:
           test -f _site/research/investor-dna/index.html
           grep -q "Investor DNA Engine" _site/research/investor-dna/index.html
           grep -q "Current Environment Fit" _site/research/investor-dna/index.html
+          test -f _site/research/morning-dataset/index.html
+          test -f _site/research/morning-dataset/morning-dataset.json
+          grep -q "Morning Dataset Diagnostics" _site/research/morning-dataset/index.html
+          grep -q '"schema_version": "1.0"' _site/research/morning-dataset/morning-dataset.json
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
