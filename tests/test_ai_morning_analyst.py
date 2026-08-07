@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import os
-import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import sys
 
@@ -35,20 +35,15 @@ class AIMorningAnalystTest(unittest.TestCase):
         self.assertIn("model: test-model", rendered)
 
     def test_estimated_cost_requires_explicit_pricing(self) -> None:
-        old_input = os.environ.pop("OPENAI_INPUT_COST_PER_MILLION", None)
-        old_output = os.environ.pop("OPENAI_OUTPUT_COST_PER_MILLION", None)
-        try:
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("OPENAI_INPUT_COST_PER_MILLION", None)
+            os.environ.pop("OPENAI_OUTPUT_COST_PER_MILLION", None)
             cost, basis = estimate_cost({"input_tokens": 100, "output_tokens": 50})
-            self.assertIsNone(cost)
-            self.assertEqual("pricing_not_configured", basis)
-        finally:
-            if old_input is not None:
-                os.environ["OPENAI_INPUT_COST_PER_MILLION"] = old_input
-            if old_output is not None:
-                os.environ["OPENAI_OUTPUT_COST_PER_MILLION"] = old_output
+        self.assertIsNone(cost)
+        self.assertEqual("pricing_not_configured", basis)
 
     def test_estimated_cost_uses_repository_rates(self) -> None:
-        with unittest.mock.patch.dict(
+        with patch.dict(
             os.environ,
             {"OPENAI_INPUT_COST_PER_MILLION": "2", "OPENAI_OUTPUT_COST_PER_MILLION": "8"},
             clear=False,
