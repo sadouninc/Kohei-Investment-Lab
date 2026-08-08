@@ -1,0 +1,103 @@
+name: Weekly SBI CSV Intake
+
+on:
+  schedule:
+    # Friday 21:00 JST = Friday 12:00 UTC.
+    - cron: "0 12 * * 5"
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: "JST date used to select the ISO week (YYYY-MM-DD); blank uses today"
+        required: false
+        type: string
+      create_issue:
+        description: "Create the issue after the duplicate check (off = dry run)"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: weekly-sbi-csv-intake
+  cancel-in-progress: false
+
+jobs:
+  create-intake-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build issue content
+        id: issue
+        env:
+          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+        run: |
+          python3 scripts/weekly_sbi_issue.py \
+            --target-date "$TARGET_DATE" \
+            --body-file weekly-sbi-issue.md \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Check Open and Closed issues for duplicates
+        id: duplicate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+        run: |
+          gh issue list --repo "$GITHUB_REPOSITORY" --state all --limit 1000 \
+            --json title,body > existing-issues.json
+          python3 scripts/weekly_sbi_issue.py \
+            --target-date "$TARGET_DATE" \
+            --existing-issues existing-issues.json \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Resolve available labels
+        id: labels
+        if: steps.duplicate.outputs.duplicate == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh label list --repo "$GITHUB_REPOSITORY" --limit 1000 --json name --jq '.[].name' > labels.txt
+          labels=()
+          for label in weekly-input sbi-csv action-required:sado; do
+            if grep -Fxq "$label" labels.txt; then
+              labels+=("$label")
+            fi
+          done
+          printf 'labels=%s\n' "$(IFS=,; echo "${labels[*]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Create weekly intake issue
+        if: >-
+          steps.duplicate.outputs.duplicate == 'false' &&
+          (github.event_name == 'schedule' || inputs.create_issue)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_TITLE: ${{ steps.issue.outputs.title }}
+          LABELS: ${{ steps.labels.outputs.labels }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--repo "$GITHUB_REPOSITORY" --title "$ISSUE_TITLE" --body-file weekly-sbi-issue.md)
+          if [[ -n "$LABELS" ]]; then
+            args+=(--label "$LABELS")
+          fi
+          gh issue create "${args[@]}"
+
+      - name: Report no-op result
+        if: >-
+          steps.duplicate.outputs.duplicate == 'true' ||
+          (github.event_name == 'workflow_dispatch' && inputs.create_issue != true)
+        env:
+          DUPLICATE: ${{ steps.duplicate.outputs.duplicate }}
+          ISSUE_TITLE: ${{ steps.issue.outputs.title }}
+        run: |
+          if [[ "$DUPLICATE" == "true" ]]; then
+            echo "Duplicate found; no issue created: $ISSUE_TITLE" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Dry run completed; no issue created: $ISSUE_TITLE" >> "$GITHUB_STEP_SUMMARY"
+          fi
