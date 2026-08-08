@@ -33,13 +33,20 @@ jobs:
       - name: Generate Investor DNA v2 report
         run: python3 scripts/investor_dna_v2.py
 
+      - name: Test Morning Dataset providers
+        run: |
+          python3 -m unittest \
+            tests.test_market_provider \
+            tests.test_portfolio_provider
+
       - name: Generate Morning Dataset
         run: |
           python3 scripts/generate_morning_dataset.py \
             --live-market \
+            --repo-portfolio \
             --investor-dna data/generated/public/investor-dna.json
 
-      - name: Verify market source is explicit
+      - name: Verify market and portfolio sources are explicit
         shell: bash
         run: |
           set -euo pipefail
@@ -47,12 +54,20 @@ jobs:
           import json
           from pathlib import Path
           payload=json.loads(Path('data/generated/public/morning-dataset.json').read_text())
-          row=next(row for row in payload['source_status'] if row['name']=='market')
-          assert row['status'] in {'OK','PARTIAL','MISSING'}, row
-          if row['status'] != 'MISSING':
+
+          market=next(row for row in payload['source_status'] if row['name']=='market')
+          assert market['status'] in {'OK','PARTIAL','MISSING'}, market
+          if market['status'] != 'MISSING':
               assert payload['market']['indices'], payload['market']
-              assert row.get('source_reference'), row
-          print('market source:', row['status'], row.get('as_of'), row.get('reason'))
+              assert market.get('source_reference'), market
+          print('market source:', market['status'], market.get('as_of'), market.get('reason'))
+
+          portfolio=next(row for row in payload['source_status'] if row['name']=='portfolio')
+          assert portfolio['status'] in {'OK','PARTIAL','STALE','MISSING'}, portfolio
+          if portfolio['status'] != 'MISSING':
+              assert payload['portfolio']['positions'], payload['portfolio']
+              assert portfolio.get('source_reference'), portfolio
+          print('portfolio source:', portfolio['status'], portfolio.get('as_of'), portfolio.get('reason'))
           PY
 
       - name: Test context optimizer

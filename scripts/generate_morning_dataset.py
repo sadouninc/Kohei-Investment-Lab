@@ -15,7 +15,7 @@ from scripts.morning_dataset.generator import (
     load_json_source,
     write_dataset,
 )
-from scripts.morning_dataset.providers import JsonFileProvider, MarketProvider
+from scripts.morning_dataset.providers import JsonFileProvider, MarketProvider, PortfolioProvider
 
 
 def main() -> None:
@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--market")
     parser.add_argument("--live-market", action="store_true", help="collect the public market snapshot via MarketProvider")
     parser.add_argument("--portfolio")
+    parser.add_argument("--repo-portfolio", action="store_true", help="collect portfolio from repository Current_Status.md")
     parser.add_argument("--capital")
     parser.add_argument("--candidates")
     parser.add_argument("--investor-dna")
@@ -33,6 +34,8 @@ def main() -> None:
 
     if args.live_market and args.market:
         parser.error("--live-market and --market are mutually exclusive")
+    if args.repo_portfolio and args.portfolio:
+        parser.error("--repo-portfolio and --portfolio are mutually exclusive")
 
     source_paths = {
         "market": args.market,
@@ -44,12 +47,16 @@ def main() -> None:
         "watchlist": args.watchlist,
     }
 
-    if args.live_market:
-        providers = [MarketProvider()]
+    if args.live_market or args.repo_portfolio:
+        providers = []
+        if args.live_market:
+            providers.append(MarketProvider())
+        if args.repo_portfolio:
+            providers.append(PortfolioProvider(Path("Current_Status.md")))
         providers.extend(
             JsonFileProvider(name, Path(path))
             for name, path in source_paths.items()
-            if name != "market" and path
+            if path and not (name == "market" and args.live_market) and not (name == "portfolio" and args.repo_portfolio)
         )
         dataset = build_dataset_from_providers(providers)
     else:
