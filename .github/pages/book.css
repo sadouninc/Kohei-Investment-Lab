@@ -287,6 +287,21 @@ code { font-size: .9em; }
 .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
 .table-scroll { overflow-x: auto; }
 .notice-card { padding: 1.2rem; border: 1px solid var(--line); border-radius: .8rem; }
+.watch-grid { display: grid; gap: 1rem; margin: 1.5rem 0 3rem; }
+.watch-card { padding: clamp(1rem, 3vw, 1.5rem); background: var(--card); border: 1px solid var(--line); border-radius: .65rem; }
+.watch-card time { color: var(--accent); font-size: .75rem; font-weight: 700; letter-spacing: .06em; }
+.watch-card h3 { margin: .25rem 0 0; }
+.watch-topic { margin: .15rem 0 1rem; color: var(--muted); font-size: .88rem; }
+.watch-card dl { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: .5rem 1rem; margin: 1rem 0 0; }
+.watch-card dt { color: var(--muted); font-size: .78rem; font-weight: 700; }
+.watch-card dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.watch-person-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 2rem; }
+.watch-person-nav a, .watch-person-nav span { padding: .35rem .65rem; border: 1px solid var(--line); border-radius: 999px; font-size: .8rem; text-decoration: none; }
+.watch-person { scroll-margin-top: 6rem; }
+@media (max-width: 640px) {
+  .watch-card dl { grid-template-columns: 1fr; gap: .1rem; }
+  .watch-card dd { margin-bottom: .8rem; }
+}
 .trade-filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
