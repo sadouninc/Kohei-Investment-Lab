@@ -40,7 +40,8 @@ jobs:
             tests.test_portfolio_provider \
             tests.test_capital_provider \
             tests.test_candidates_provider \
-            tests.test_events_provider
+            tests.test_events_provider \
+            tests.test_watchlist_provider
 
       - name: Generate Morning Dataset
         run: |
@@ -50,6 +51,7 @@ jobs:
             --repo-capital \
             --repo-candidates \
             --repo-events \
+            --repo-watchlist \
             --investor-dna data/generated/public/investor-dna.json
 
       - name: Verify Morning Dataset repository sources are explicit
@@ -68,7 +70,7 @@ jobs:
               assert market.get('source_reference'), market
           print('market source:', market['status'], market.get('as_of'), market.get('reason'))
 
-          for name in ('portfolio', 'capital', 'candidates', 'events'):
+          for name in ('portfolio', 'capital', 'candidates', 'events', 'watchlist'):
               row=next(row for row in payload['source_status'] if row['name']==name)
               assert row['status'] in {'OK','PARTIAL','STALE','MISSING'}, row
               if row['status'] != 'MISSING':
