@@ -42,3 +42,21 @@ python scripts/manage_portfolio_state.py \
 ```
 
 取引履歴CSV、証券会社の認証情報、秘密情報はGitHubへ保存しない。
+
+## Weekly SBI CSV intake validation
+
+週次CSVはPortfolio Stateへ適用する前に、Git管理外の場所で検証する。
+
+```text
+python scripts/validate_weekly_sbi_csv.py \
+  --input path/to/sbi-executions.csv \
+  --issue-number 105 \
+  --week 2026-W32 \
+  --report data/private/sbi-validation-2026-W32.json
+```
+
+検証はIssue番号・ISO週・CSVのSHA-256を紐付け、ファイル、文字コード、必須schema、対象週、認証情報らしき項目、同一ファイルの再受付を確認する。raw CSV、取引明細、認証情報はreportやGitHubへ保存しない。
+
+対象週に約定がない場合、取引がなかったと推測しない。SBI上で取引なしを確認した場合に限り、`--confirm-no-trades`を指定する。
+
+`VALID`はPortfolio Stateへの反映完了を意味しない。PR2のvalidation処理はPortfolioを変更せず、後続のimport / reconciliationが明示的に実行されるまでWeekly IssueをCloseしない。
