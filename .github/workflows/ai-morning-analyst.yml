@@ -33,7 +33,7 @@ jobs:
       - name: Generate Investor DNA v2 report
         run: python3 scripts/investor_dna_v2.py
 
-      - name: Test Morning Dataset providers
+      - name: Test Morning Dataset providers and event collector
         run: |
           python3 -m unittest \
             tests.test_market_provider \
@@ -41,7 +41,21 @@ jobs:
             tests.test_capital_provider \
             tests.test_candidates_provider \
             tests.test_events_provider \
-            tests.test_watchlist_provider
+            tests.test_watchlist_provider \
+            tests.test_event_calendar_collector
+
+      - name: Build canonical event calendar from reviewed inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for category in earnings economic policy market_calendar company; do
+            path="data/events/sources/${category}.json"
+            if [[ -f "$path" ]]; then
+              args+=(--source "${category}=${path}|repository-reviewed-${category}")
+            fi
+          done
+          python3 scripts/event_calendar_collector.py "${args[@]}" --output data/events/calendar.json
 
       - name: Generate Morning Dataset
         run: |
