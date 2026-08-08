@@ -5,6 +5,9 @@
 
 ## Portfolio
 
+> as_of: 2026-08-04
+> authority: human-confirmed portfolio snapshot
+
 - 日東紡（信用買い800株・信用売り100株、差引買い越し700株）
 - 信越化学
 - ダイヘン
@@ -21,6 +24,9 @@
 - 市場心理と企業価値のギャップを狙う
 
 ## Current Focus
+
+> as_of: 2026-08-04
+> authority: human-reviewed qualitative focus
 
 - 信越化学の決算
 - 原子力
