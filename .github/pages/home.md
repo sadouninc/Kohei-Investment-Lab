@@ -31,6 +31,7 @@ permalink: /
     <a class="nav-card" href="{{ '/research/market-phase/ai-semiconductor/' | relative_url }}"><strong>Market Phase</strong><span>AI半導体40銘柄の相関・自動クラスタ・先行遅行候補を調べる</span></a>
     <a class="nav-card" href="{{ '/research/investor-dna/' | relative_url }}"><strong>Investor DNA</strong><span>実取引から「なぜこの銘柄で勝てる／勝てないか」を原因分解する</span></a>
     <a class="nav-card" href="{{ '/research/morning-dataset/' | relative_url }}"><strong>Morning Dataset</strong><span>AI判断前にGitHub Actions / Pythonが準備したFact・Featureとデータ鮮度を確認する</span></a>
+    <a class="nav-card" href="{{ '/research/ai-key-person-watch/' | relative_url }}"><strong>AI Key Person Watch</strong><span>AI主要人物の重要ニュース差分と日本企業への波及を追う</span></a>
     <a class="nav-card" href="{{ '/reports/morning/' | relative_url }}"><strong>AI Morning Reports</strong><span>Morning DatasetをOpenAI APIが分析した毎朝の自動市場レポートを読む</span></a>
     <a class="nav-card" href="{{ '/architecture/' | relative_url }}"><strong>Architecture</strong><span>Investment Decision OS と分析基盤の設計ドキュメントを読む</span></a>
     <a class="nav-card" href="{{ '/trade-journal/' | relative_url }}"><strong>Trade Journal</strong><span>市場認識・投資判断・売買・反省・改善を時系列で読む</span></a>

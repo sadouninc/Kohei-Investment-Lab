@@ -12,6 +12,7 @@ on:
       - "04_Market/**"
       - "05_Daily_Reports/**"
       - "06_Research/Architecture/**"
+      - "06_Research/News/**"
       - "data/market/**"
       - "data/masters/**"
       - "data/config/**"
@@ -35,6 +36,7 @@ on:
       - "04_Market/**"
       - "05_Daily_Reports/**"
       - "06_Research/Architecture/**"
+      - "06_Research/News/**"
       - "data/market/**"
       - "data/masters/**"
       - "data/config/**"
@@ -116,6 +118,8 @@ jobs:
           test -f site-src/research/investor-dna/index.md
           test -f site-src/research/morning-dataset/index.md
           test -f site-src/research/morning-dataset/morning-dataset.json
+          test -f site-src/research/ai-key-person-watch/index.md
+          test -f site-src/research/ai-key-person-watch/2026/2026-08/index.md
           test -f site-src/reports/morning/index.md
           test -f data/generated/public/morning-dataset.json
           test -f site-src/architecture/index.md
@@ -142,6 +146,10 @@ jobs:
           grep -q "AI Morning Reports" site-src/index.md
           grep -q "Investor DNA" site-src/index.md
           grep -q "Morning Dataset" site-src/index.md
+          grep -q "AI Key Person Watch" site-src/index.md
+          grep -q "孫正義" site-src/research/ai-key-person-watch/index.md
+          grep -q "何が変わったか" site-src/research/ai-key-person-watch/index.md
+          grep -q "2026-08" site-src/research/ai-key-person-watch/index.md
           grep -q "Investment Decision OS Data Model" site-src/architecture/index.md
           grep -q "FACT / OBSERVATION" site-src/architecture/investment-decision-os-data-model/index.md
           grep -q "Architecture" site-src/index.md
@@ -185,6 +193,9 @@ jobs:
           grep -q "Morning Dataset Diagnostics" _site/research/morning-dataset/index.html
           grep -q '"schema_version": "1.0"' _site/research/morning-dataset/morning-dataset.json
           test -f _site/reports/morning/index.html
+          test -f _site/research/ai-key-person-watch/index.html
+          test -f _site/research/ai-key-person-watch/2026/2026-08/index.html
+          grep -q "AI Key Person Watch" _site/research/ai-key-person-watch/index.html
           grep -q "AI Morning Reports" _site/reports/morning/index.html
 
       - name: Upload Pages artifact

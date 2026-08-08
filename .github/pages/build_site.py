@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import html
 import json
 import re
 import shutil
@@ -19,6 +20,10 @@ MARKET_CHART_IMAGE = ROOT / "assets" / "images" / "market-analysis" / "2026" / "
 MARKET_CHART_PLACEHOLDER = "{{ MARKET_CHART_DATA_URI }}"
 MARKET_PHASE_DATA = (
     ROOT / "data" / "generated" / "public" / "market-phase" / "ai-semiconductor.json"
+)
+KEY_PERSON_SOURCE_DIRS = (
+    ROOT / "06_Research" / "News" / "AI_Key_Person_Watch",
+    ROOT / "06_Research" / "News" / "AI_Key_Person",
 )
 
 FRAMEWORK_CHAPTERS = [
@@ -45,6 +50,23 @@ class JournalEntry:
     day: date
     content: str
     source: Path
+
+
+@dataclass(frozen=True)
+class KeyPersonNews:
+    timestamp: str
+    person: str
+    topic: str
+    related: str
+    change: str
+    investment_meaning: str
+    source_label: str
+    source_url: str | None
+    source: Path
+
+    @property
+    def month(self) -> str:
+        return self.timestamp[:7]
 
 
 def front_matter(title: str, description: str, permalink: str) -> str:
@@ -196,6 +218,150 @@ def build_market_analysis() -> None:
     else:
         index += "公開中の市場分析はありません。\n"
     write(SITE / "market-analysis" / "index.md", index)
+
+
+def discover_key_person_news() -> list[KeyPersonNews]:
+    entries: list[KeyPersonNews] = []
+    seen_sources: set[Path] = set()
+    heading = re.compile(r"^## (\d{4}-\d{2}-\d{2} \d{2}:\d{2} JST)\s*$", re.MULTILINE)
+    field = re.compile(r"^- ([^:：]+)[:：]\s*(.+)$", re.MULTILINE)
+    for directory in KEY_PERSON_SOURCE_DIRS:
+        if not directory.is_dir():
+            continue
+        for source in sorted(directory.glob("*/*.md")):
+            resolved = source.resolve()
+            if resolved in seen_sources:
+                continue
+            seen_sources.add(resolved)
+            text = source.read_text(encoding="utf-8")
+            matches = list(heading.finditer(text))
+            for index, match in enumerate(matches):
+                end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+                block = text[match.end():end].strip()
+                if "追加情報なし" in block:
+                    continue
+                subject = re.search(r"^### (.+?)\s*$", block, re.MULTILINE)
+                values = {key.strip(): value.strip() for key, value in field.findall(block)}
+                if not subject or not all(values.get(key) for key in ("何が変わったか", "投資上の意味", "Source")):
+                    continue
+                person, separator, topic = subject.group(1).partition(" / ")
+                source_value = values["Source"]
+                source_link = re.search(r"https?://\S+", source_value)
+                source_url = source_link.group(0).rstrip(".,)") if source_link else None
+                source_label = source_value.replace(source_link.group(0), "").rstrip(" —-") if source_link else source_value
+                entries.append(
+                    KeyPersonNews(
+                        timestamp=match.group(1),
+                        person=person.strip(),
+                        topic=topic.strip() if separator else "",
+                        related=values.get("関連企業・テーマ", "未記録"),
+                        change=values["何が変わったか"],
+                        investment_meaning=values["投資上の意味"],
+                        source_label=source_label or "Source",
+                        source_url=source_url,
+                        source=source,
+                    )
+                )
+    return sorted(entries, key=lambda entry: entry.timestamp, reverse=True)
+
+
+def person_anchor(person: str) -> str:
+    anchors = {
+        "ジェンスン・フアン": "jensen-huang",
+        "孫正義": "masayoshi-son",
+        "サム・アルトマン": "sam-altman",
+        "イーロン・マスク": "elon-musk",
+        "リサ・スー": "lisa-su",
+        "デミス・ハサビス": "demis-hassabis",
+        "ダリオ・アモデイ": "dario-amodei",
+    }
+    return anchors.get(person, "other")
+
+
+def render_key_person_entries(entries: list[KeyPersonNews]) -> str:
+    cards: list[str] = []
+    for entry in entries:
+        source = html.escape(entry.source_label)
+        if entry.source_url:
+            source = f'<a href="{html.escape(entry.source_url, quote=True)}" rel="noopener noreferrer">{source}</a>'
+        topic = f'<p class="watch-topic">{html.escape(entry.topic)}</p>' if entry.topic else ""
+        cards.append(
+            '<article class="watch-card">'
+            f'<time datetime="{entry.timestamp[:16].replace(" ", "T")}">{html.escape(entry.timestamp)}</time>'
+            f'<h3>{html.escape(entry.person)}</h3>{topic}'
+            '<dl>'
+            f'<dt>関連企業・テーマ</dt><dd>{html.escape(entry.related)}</dd>'
+            f'<dt>何が変わったか</dt><dd>{html.escape(entry.change)}</dd>'
+            f'<dt>投資上の意味</dt><dd>{html.escape(entry.investment_meaning)}</dd>'
+            f'<dt>Source</dt><dd>{source}</dd>'
+            '</dl></article>'
+        )
+    return '<div class="watch-grid">\n' + "\n".join(cards) + "\n</div>\n"
+
+
+def build_key_person_watch() -> None:
+    entries = discover_key_person_news()
+    url = "/research/ai-key-person-watch/"
+    page = front_matter(
+        "AI Key Person Watch",
+        "AI主要人物の重要ニュース差分と日本企業への波及を追う",
+        url,
+    )
+    page += (
+        '<p class="breadcrumb"><a href="{{ \'/\' | relative_url }}">Home</a>'
+        " / Research / AI Key Person Watch</p>\n\n"
+        "# AI Key Person Watch\n\n"
+        "AI分野の主要人物による発言・戦略・企業方針のうち、"
+        "日本企業と投資判断に関係する重要な差分だけを記録します。\n\n"
+    )
+    if not entries:
+        page += '<div class="notice-card">重要な追加情報はまだ記録されていません。</div>\n'
+        write(SITE / "research" / "ai-key-person-watch" / "index.md", page)
+        return
+
+    page += "## 最新ニュース\n\n" + render_key_person_entries(entries[:12])
+    people: dict[str, list[KeyPersonNews]] = {}
+    for entry in entries:
+        people.setdefault(entry.person, []).append(entry)
+    page += "\n## 人物別\n\n<nav class=\"watch-person-nav\" aria-label=\"人物別ニュース\">"
+    page += "".join(
+        f'<a href="#{person_anchor(person)}">{html.escape(person)}</a>'
+        for person in people
+    ) + "</nav>\n"
+    for person, person_entries in people.items():
+        page += f'\n<section id="{person_anchor(person)}" class="watch-person" markdown="1">\n\n### {person}\n\n'
+        page += render_key_person_entries(person_entries) + "\n</section>\n"
+
+    topics = sorted({entry.topic for entry in entries if entry.topic})
+    if topics:
+        page += "\n## 主なテーマ\n\n<div class=\"watch-person-nav\">"
+        page += "".join(f"<span>{html.escape(topic)}</span>" for topic in topics)
+        page += "</div>\n"
+
+    months: dict[str, list[KeyPersonNews]] = {}
+    for entry in entries:
+        months.setdefault(entry.month, []).append(entry)
+    page += "\n## 月別アーカイブ\n\n<div class=\"content-grid\">\n"
+    for month, month_entries in sorted(months.items(), reverse=True):
+        year = month[:4]
+        archive_url = f"/research/ai-key-person-watch/{year}/{month}/"
+        page += (
+            f'<a class="content-card" href="{{{{ \'{archive_url}\' | relative_url }}}}">'
+            f"<strong>{month}</strong><span>{len(month_entries)}件の重要ニュース</span></a>\n"
+        )
+        archive = front_matter(
+            f"AI Key Person Watch — {month}",
+            f"{month}のAIキーパーソン重要ニュース差分",
+            archive_url,
+        )
+        archive += (
+            '<p class="breadcrumb"><a href="{{ \'/research/ai-key-person-watch/\' | relative_url }}">'
+            f"AI Key Person Watch</a> / {month}</p>\n\n# AI Key Person Watch — {month}\n\n"
+            + render_key_person_entries(month_entries)
+        )
+        write(SITE / "research" / "ai-key-person-watch" / year / month / "index.md", archive)
+    page += "</div>\n"
+    write(SITE / "research" / "ai-key-person-watch" / "index.md", page)
 
 
 def build_market_phase() -> None:
@@ -816,6 +982,7 @@ def main() -> None:
     build_companies()
     build_market_analysis()
     build_market_phase()
+    build_key_person_watch()
     build_trade_journal()
     build_trade_analysis_v2()
 
