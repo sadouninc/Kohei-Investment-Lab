@@ -17,7 +17,13 @@ class MorningDatasetPageTest(unittest.TestCase):
             "schema_version": "1.0",
             "generated_at": "2026-08-07T08:40:00+09:00",
             "as_of": "2026-08-07",
-            "data_quality": {"status": "PARTIAL", "completeness": 0.5},
+            "data_quality": {
+                "status": "PARTIAL",
+                "completeness": 1 / 7,
+                "ok_sources": 1,
+                "total_sources": 7,
+                "completeness_label": "1 / 7",
+            },
             "market": {"phase": None},
             "portfolio": None,
             "capital": None,
@@ -36,6 +42,9 @@ class MorningDatasetPageTest(unittest.TestCase):
         self.assertIn("PARTIAL", page)
         self.assertIn("capital source is missing", page)
         self.assertIn("morning-dataset.json", page)
+        self.assertIn("1 / 7 sources", page)
+        self.assertIn("14.3%", page)
+        self.assertNotIn("714.3%", page)
         self.assertNotIn("Today Strategy", page)
 
 
