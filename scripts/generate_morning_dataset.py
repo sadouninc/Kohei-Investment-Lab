@@ -31,7 +31,7 @@ def main() -> None:
     parser.add_argument("--market")
     parser.add_argument("--live-market", action="store_true", help="collect the public market snapshot via MarketProvider")
     parser.add_argument("--portfolio")
-    parser.add_argument("--repo-portfolio", action="store_true", help="collect portfolio from repository Current_Status.md")
+    parser.add_argument("--repo-portfolio", action="store_true", help="collect portfolio from data/portfolio/current.json")
     parser.add_argument("--capital")
     parser.add_argument("--repo-capital", action="store_true", help="collect latest capital snapshot from repository history.db")
     parser.add_argument("--candidates")
@@ -72,7 +72,7 @@ def main() -> None:
         if args.live_market:
             providers.append(MarketProvider())
         if args.repo_portfolio:
-            providers.append(PortfolioProvider(Path("Current_Status.md")))
+            providers.append(PortfolioProvider(Path("data/portfolio/current.json")))
         if args.repo_capital:
             providers.append(CapitalProvider(Path("data/database/history.db")))
         if args.repo_candidates:

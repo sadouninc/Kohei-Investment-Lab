@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
+import json
 import re
 
 from .base import ProviderResult
@@ -24,6 +25,9 @@ class PortfolioProvider:
     def collect(self) -> ProviderResult:
         if not self.path.is_file():
             return ProviderResult.unavailable(self.name, reason="canonical portfolio source not found", source_reference=str(self.path))
+
+        if self.path.suffix.lower() == ".json":
+            return self._collect_canonical_json()
 
         text = self.path.read_text(encoding="utf-8")
         lines = self._portfolio_lines(text)
@@ -57,6 +61,63 @@ class PortfolioProvider:
         if age.days > self.max_age_days:
             return ProviderResult.unavailable(self.name, status="STALE", as_of=as_of, source_reference=str(self.path), reason=f"portfolio snapshot is {age.days} days old (freshness limit {self.max_age_days})", data=payload)
         return ProviderResult.ok(self.name, payload, as_of=as_of, source_reference=str(self.path))
+
+    def _collect_canonical_json(self) -> ProviderResult:
+        try:
+            payload = json.loads(self.path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            return ProviderResult.unavailable(
+                self.name,
+                status="MISSING",
+                source_reference=str(self.path),
+                reason=f"canonical portfolio JSON is invalid: {exc}",
+            )
+        positions = payload.get("positions")
+        as_of = payload.get("verification_as_of") or payload.get("as_of")
+        status = payload.get("verification_status")
+        if not isinstance(positions, list) or not positions:
+            return ProviderResult.unavailable(
+                self.name, status="MISSING", as_of=as_of, source_reference=str(self.path),
+                reason="Canonical Portfolio State contains no active positions",
+            )
+        data = {
+            "positions": positions,
+            "exposure": None,
+            "pnl": None,
+            "verification_status": status,
+            "base_snapshot": payload.get("base_snapshot"),
+            "verification_diff": payload.get("verification_diff") or [],
+        }
+        if status == "MISMATCH":
+            return ProviderResult.unavailable(
+                self.name, status="PARTIAL", as_of=as_of, source_reference=str(self.path),
+                reason="Canonical Portfolio State does not match the latest verification",
+                data=data,
+            )
+        if status not in {"VERIFIED", "PROVISIONAL"}:
+            return ProviderResult.unavailable(
+                self.name, status="PARTIAL", as_of=as_of, source_reference=str(self.path),
+                reason=f"unknown portfolio verification status: {status!r}", data=data,
+            )
+        if not isinstance(as_of, str):
+            return ProviderResult.unavailable(
+                self.name, status="PARTIAL", source_reference=str(self.path),
+                reason="canonical portfolio has no as_of date", data=data,
+            )
+        try:
+            parsed_as_of = datetime.strptime(as_of[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return ProviderResult.unavailable(
+                self.name, status="PARTIAL", as_of=as_of, source_reference=str(self.path),
+                reason="canonical portfolio as_of is not YYYY-MM-DD", data=data,
+            )
+        age = (self.today or date.today()) - parsed_as_of
+        if age.days > self.max_age_days:
+            return ProviderResult.unavailable(
+                self.name, status="STALE", as_of=as_of, source_reference=str(self.path),
+                reason=f"portfolio snapshot is {age.days} days old (freshness limit {self.max_age_days})", data=data,
+            )
+        return ProviderResult.ok(self.name, data, as_of=as_of, source_reference=str(self.path))
 
     @staticmethod
     def _portfolio_lines(text: str) -> list[str]:

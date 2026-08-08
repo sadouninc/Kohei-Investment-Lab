@@ -39,6 +39,27 @@ class CurrentStatusRefreshTest(unittest.TestCase):
         self.assertIn("> as_of: 2026-08-01\n- Old Holding", updated)
         self.assertIn("> as_of: 2026-08-08\n- preserve focus", updated)
 
+    def test_canonical_positions_include_type_quantity_and_status(self):
+        updated = refresh_portfolio(BASE, {
+            "as_of": "2026-08-08",
+            "verification_status": "PROVISIONAL",
+            "authority": "verified_snapshot_plus_sbi_executions",
+            "positions": [{
+                "security_code": "3110", "security_name": "日東紡",
+                "position_type": "margin_long", "quantity": 800,
+            }],
+        })
+        self.assertIn("- 日東紡（信用買い800株）", updated)
+        self.assertIn("> verification_status: PROVISIONAL", updated)
+        self.assertIn("> authority: verified_snapshot_plus_sbi_executions", updated)
+
+    def test_mismatch_never_refreshes_current_status(self):
+        with self.assertRaises(ValueError):
+            refresh_portfolio(BASE, {
+                "as_of": "2026-08-08", "verification_status": "MISMATCH",
+                "positions": [{"security_name": "日東紡", "position_type": "margin_long", "quantity": 800}],
+            })
+
     def test_providers_use_independent_dates(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "Current_Status.md"

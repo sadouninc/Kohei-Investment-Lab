@@ -68,6 +68,15 @@ class PortfolioStateTest(unittest.TestCase):
         self.assertEqual("MISMATCH", result["verification_status"])
         self.assertEqual(100, result["verification_diff"][0]["difference"])
 
+    def test_account_types_remain_separate_when_source_provides_them(self):
+        snapshot = dict(BASE, positions=[
+            {"security_code": "4063", "security_name": "信越化学", "position_type": "cash", "account_type": "特定", "quantity": 100},
+            {"security_code": "4063", "security_name": "信越化学", "position_type": "cash", "account_type": "NISA(成)", "quantity": 100},
+        ])
+        result = build_state(snapshot, [])
+        self.assertEqual(2, len(result["positions"]))
+        self.assertEqual({"特定", "NISA(成)"}, {row["account_type"] for row in result["positions"]})
+
 
 if __name__ == "__main__":
     unittest.main()
