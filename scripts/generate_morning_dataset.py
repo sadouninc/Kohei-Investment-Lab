@@ -52,7 +52,7 @@ def main() -> None:
         if args.live_market:
             providers.append(MarketProvider())
         if args.repo_portfolio:
-            providers.append(PortfolioProvider(ROOT / "Current_Status.md"))
+            providers.append(PortfolioProvider(Path("Current_Status.md")))
         providers.extend(
             JsonFileProvider(name, Path(path))
             for name, path in source_paths.items()
