@@ -155,4 +155,8 @@ def promote_verified_snapshot(state: dict[str, Any], directory: Path) -> Path:
         "positions": state.get("positions") or [],
         "applied_trade_ids": state.get("applied_trade_ids") or [],
     }
+    if state.get("source_references"):
+        snapshot["source_references"] = state["source_references"]
+    if state.get("applied_trade_references"):
+        snapshot["applied_trade_references"] = state["applied_trade_references"]
     return write_json_atomic(directory / f"{snapshot_id}.json", snapshot)

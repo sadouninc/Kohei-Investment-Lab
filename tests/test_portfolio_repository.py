@@ -97,6 +97,28 @@ class PortfolioRepositoryTest(unittest.TestCase):
             self.assertEqual("VERIFIED", payload["verification_status"])
             self.assertEqual("verified-2026-08-08", payload["snapshot_id"])
 
+    def test_promoted_snapshot_preserves_audit_references(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            current = dict(
+                BASE,
+                base_snapshot=BASE["snapshot_id"],
+                source_references={"weekly_intake": {"issue_number": 105}},
+                applied_trade_references=[
+                    {"trade_id": "sbi-execution:1", "source_reference": "week.csv#row-2"}
+                ],
+            )
+            result = verify_state(
+                current, BASE["positions"], verification_source="sbi.csv", as_of="2026-08-08"
+            )
+
+            path = promote_verified_snapshot(result, Path(tmp))
+            payload = json.loads(path.read_text(encoding="utf-8"))
+
+            self.assertEqual(105, payload["source_references"]["weekly_intake"]["issue_number"])
+            self.assertEqual(
+                "sbi-execution:1", payload["applied_trade_references"][0]["trade_id"]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

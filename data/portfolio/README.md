@@ -60,3 +60,20 @@ python scripts/validate_weekly_sbi_csv.py \
 対象週に約定がない場合、取引がなかったと推測しない。SBI上で取引なしを確認した場合に限り、`--confirm-no-trades`を指定する。
 
 `VALID`はPortfolio Stateへの反映完了を意味しない。PR2のvalidation処理はPortfolioを変更せず、後続のimport / reconciliationが明示的に実行されるまでWeekly IssueをCloseしない。
+
+## Weekly reconciliation
+
+`VALID` reportと同じSHA-256のCSV、および基準日付きのSBI Position Snapshotを明示して照合する。
+
+```text
+python scripts/reconcile_weekly_sbi.py \
+  --input path/to/sbi-executions.csv \
+  --validation-report data/private/sbi-validation-2026-W32.json \
+  --issue-number 105 \
+  --week 2026-W32 \
+  --verify-positions path/to/sbi-positions.json \
+  --result-report data/private/sbi-reconciliation-2026-W32.json \
+  --refresh-current-status Current_Status.md
+```
+
+照合結果が`VERIFIED`の場合のみ、新しいSnapshotへ昇格し`Current_Status.md`を更新する。`MISMATCH`の場合は差分を`current.json`とlocal result reportへ残すが、Snapshot昇格・Current Status更新・数量の自動補正は行わない。Morning DatasetのPortfolio Providerは同じ`current.json`を参照し、`VERIFIED`は`OK`、`MISMATCH`は`PARTIAL`として公開する。

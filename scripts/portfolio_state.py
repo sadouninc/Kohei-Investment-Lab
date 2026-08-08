@@ -128,7 +128,12 @@ def build_state(snapshot: dict[str, Any], trades: Iterable[dict[str, Any]]) -> d
 def reconcile(current: dict[str, Any], verified_positions: Iterable[dict[str, Any]], *, verification_source: str, as_of: str) -> dict[str, Any]:
     """Compare calculated state with an external SBI-derived position snapshot."""
     calculated = {_key(row): _quantity(row.get("quantity")) for row in current.get("positions") or []}
-    external = {_key(row): _quantity(row.get("quantity")) for row in verified_positions}
+    external: dict[PositionKey, Decimal] = {}
+    for row in verified_positions:
+        key = _key(row)
+        if key in external:
+            raise PortfolioStateError(f"duplicate verification position: {key}")
+        external[key] = _quantity(row.get("quantity"))
     diffs = []
     for key in sorted(set(calculated) | set(external), key=lambda k: ((k.security_code or ""), k.security_name, k.position_type, k.account_type or "")):
         calc = calculated.get(key, Decimal("0"))
@@ -144,6 +149,7 @@ def reconcile(current: dict[str, Any], verified_positions: Iterable[dict[str, An
                 "difference": int(actual - calc),
             })
     result = dict(current)
+    result["as_of"] = as_of
     result["verification_status"] = "VERIFIED" if not diffs else "MISMATCH"
     result["verification_source"] = verification_source
     result["verification_as_of"] = as_of
