@@ -34,6 +34,6 @@ permalink: /
     <a class="nav-card" href="{{ '/reports/morning/' | relative_url }}"><strong>AI Morning Reports</strong><span>Morning DatasetをOpenAI APIが分析した毎朝の自動市場レポートを読む</span></a>
     <a class="nav-card" href="{{ '/architecture/' | relative_url }}"><strong>Architecture</strong><span>Investment Decision OS と分析基盤の設計ドキュメントを読む</span></a>
     <a class="nav-card" href="{{ '/trade-journal/' | relative_url }}"><strong>Trade Journal</strong><span>市場認識・投資判断・売買・反省・改善を時系列で読む</span></a>
-    <a class="nav-card" href="{{ '/trade-analysis/' | relative_url }}"><strong>Trade Analysis</strong><span>公開可能な売買検証を将来追加するための入口</span></a>
+    <a class="nav-card" href="{{ '/trade-analysis/' | relative_url }}"><strong>Trade Analysis</strong><span>実取引の成績・行動パターンを分析し、次の投資判断改善につなげる</span></a>
   </div>
 </section>
