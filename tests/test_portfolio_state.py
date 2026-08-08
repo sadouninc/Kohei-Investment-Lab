@@ -68,6 +68,13 @@ class PortfolioStateTest(unittest.TestCase):
         self.assertEqual("MISMATCH", result["verification_status"])
         self.assertEqual(100, result["verification_diff"][0]["difference"])
 
+    def test_reconcile_rejects_duplicate_verification_positions(self):
+        current = build_state(BASE, [])
+        duplicate = [BASE["positions"][0], dict(BASE["positions"][0])]
+
+        with self.assertRaisesRegex(PortfolioStateError, "duplicate verification position"):
+            reconcile(current, duplicate, verification_source="sbi.csv", as_of="2026-08-08")
+
     def test_account_types_remain_separate_when_source_provides_them(self):
         snapshot = dict(BASE, positions=[
             {"security_code": "4063", "security_name": "信越化学", "position_type": "cash", "account_type": "特定", "quantity": 100},
