@@ -38,7 +38,8 @@ jobs:
           python3 -m unittest \
             tests.test_market_provider \
             tests.test_portfolio_provider \
-            tests.test_capital_provider
+            tests.test_capital_provider \
+            tests.test_candidates_provider
 
       - name: Generate Morning Dataset
         run: |
@@ -46,9 +47,10 @@ jobs:
             --live-market \
             --repo-portfolio \
             --repo-capital \
+            --repo-candidates \
             --investor-dna data/generated/public/investor-dna.json
 
-      - name: Verify market, portfolio and capital sources are explicit
+      - name: Verify Morning Dataset repository sources are explicit
         shell: bash
         run: |
           set -euo pipefail
@@ -64,19 +66,13 @@ jobs:
               assert market.get('source_reference'), market
           print('market source:', market['status'], market.get('as_of'), market.get('reason'))
 
-          portfolio=next(row for row in payload['source_status'] if row['name']=='portfolio')
-          assert portfolio['status'] in {'OK','PARTIAL','STALE','MISSING'}, portfolio
-          if portfolio['status'] != 'MISSING':
-              assert payload['portfolio']['positions'], payload['portfolio']
-              assert portfolio.get('source_reference'), portfolio
-          print('portfolio source:', portfolio['status'], portfolio.get('as_of'), portfolio.get('reason'))
-
-          capital=next(row for row in payload['source_status'] if row['name']=='capital')
-          assert capital['status'] in {'OK','PARTIAL','STALE','MISSING'}, capital
-          if capital['status'] != 'MISSING':
-              assert payload['capital'], payload['capital']
-              assert capital.get('source_reference'), capital
-          print('capital source:', capital['status'], capital.get('as_of'), capital.get('reason'))
+          for name in ('portfolio', 'capital', 'candidates'):
+              row=next(row for row in payload['source_status'] if row['name']==name)
+              assert row['status'] in {'OK','PARTIAL','STALE','MISSING'}, row
+              if row['status'] != 'MISSING':
+                  assert payload[name], (name, payload[name])
+                  assert row.get('source_reference'), row
+              print(f'{name} source:', row['status'], row.get('as_of'), row.get('reason'))
           PY
 
       - name: Test context optimizer
@@ -111,8 +107,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add 05_Daily_Reports/Morning
-          # Most generated data stays ignored. AI diagnostics are a deliberate
-          # exception because they are part of the reproducible research history.
           git add -f data/generated/diagnostics/openai
           if git diff --cached --quiet; then
             echo "No report changes to commit."
