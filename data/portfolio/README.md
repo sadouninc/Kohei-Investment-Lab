@@ -19,6 +19,11 @@
 
 `current.json`は`VERIFIED`、`PROVISIONAL`、`MISMATCH`のいずれかを明示する。`MISMATCH`は差分を記録し、自動修正しない。
 
+## Verification scope
+
+初回の`VERIFIED` Snapshotは、SBIの保有証券一覧と信用建玉一覧で明示された国内上場株式を対象とする。
+現行schemaでposition typeを一意に表現できない投資信託は、株式の`cash`へ推測変換せず対象外とする。
+
 ## Build
 
 ```text
