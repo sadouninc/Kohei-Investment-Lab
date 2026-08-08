@@ -110,7 +110,7 @@ def main() -> None:
     path = write_dataset(dataset, Path(args.output))
     print(f"Morning Dataset: {path}")
     quality = dataset.get("data_quality") or {}
-    print(f"Completeness: {quality.get('completeness_count', '—')} / status={quality.get('status', '—')}")
+    print(f"Completeness: {quality.get('completeness_count', 'unknown')} / status={quality.get('status', 'unknown')}")
 
 
 if __name__ == "__main__":

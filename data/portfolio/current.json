@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-08-08",
+  "verification_status": "VERIFIED",
+  "base_snapshot": "verified-2026-08-08",
+  "authority": "sbi_verified_position_snapshot",
+  "verification_source": "SBI holdings and margin positions received 2026-08-08",
+  "verification_as_of": "2026-08-08",
+  "verification_scope": "domestic listed equities; investment trusts excluded",
+  "source_references": {
+    "snapshot_id": "verified-2026-08-08",
+    "cash_positions_csv_sha256": "10a0bdcf2c325659df3fc4e2de7e202141db849b9bab1a3a33486005113c3ece",
+    "margin_positions_csv_sha256": "322aef9eb1fd5923d82def4d3be3af62cd3960bb921958a177907ca0a2d7bfe5"
+  },
+  "positions": [
+    {"security_code": "1321", "security_name": "ＮＥＸＴ ＦＵＮＤＳ 日経２２５連動型上場投信", "position_type": "cash", "account_type": "特定", "quantity": 5},
+    {"security_code": "247A", "security_name": "Ａｉロボティクス", "position_type": "cash", "account_type": "特定", "quantity": 300},
+    {"security_code": "3110", "security_name": "日東紡績", "position_type": "margin_long", "account_type": "特定", "quantity": 900},
+    {"security_code": "3291", "security_name": "飯田グループホールディングス", "position_type": "margin_short", "account_type": "特定", "quantity": 100},
+    {"security_code": "3687", "security_name": "フィックスターズ", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "3778", "security_name": "さくらインターネット", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "4063", "security_name": "信越化学工業", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "4204", "security_name": "積水化学工業", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "4588", "security_name": "オンコリスバイオファーマ", "position_type": "cash", "account_type": "特定", "quantity": 100},
+    {"security_code": "4592", "security_name": "サンバイオ", "position_type": "cash", "account_type": "特定", "quantity": 100},
+    {"security_code": "5801", "security_name": "古河電気工業", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "6356", "security_name": "日本ギア工業", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "6622", "security_name": "ダイヘン", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "6702", "security_name": "富士通", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "6965", "security_name": "浜松ホトニクス", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "7011", "security_name": "三菱重工業", "position_type": "margin_long", "account_type": "特定", "quantity": 100},
+    {"security_code": "9166", "security_name": "ＧＥＮＤＡ", "position_type": "cash", "account_type": "特定", "quantity": 100},
+    {"security_code": "9348", "security_name": "ｉｓｐａｃｅ", "position_type": "cash", "account_type": "特定", "quantity": 100},
+    {"security_code": "9432", "security_name": "ＮＴＴ", "position_type": "cash", "account_type": "特定", "quantity": 300}
+  ],
+  "applied_trade_ids": [],
+  "duplicate_trade_ids": [],
+  "verification_diff": []
+}
