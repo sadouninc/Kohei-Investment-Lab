@@ -18,6 +18,7 @@ class PositionKey:
     security_code: str | None
     security_name: str
     position_type: str
+    account_type: str | None
 
 
 def _quantity(value: Any) -> Decimal:
@@ -38,7 +39,13 @@ def _key(row: dict[str, Any]) -> PositionKey:
     if position_type not in VALID_POSITION_TYPES:
         raise PortfolioStateError(f"unknown position_type: {position_type!r}")
     code = row.get("security_code")
-    return PositionKey(str(code).strip() if code not in (None, "") else None, name, position_type)
+    account = row.get("account_type") or row.get("account")
+    return PositionKey(
+        str(code).strip() if code not in (None, "") else None,
+        name,
+        position_type,
+        str(account).strip() if account not in (None, "") else None,
+    )
 
 
 def _expected_action(position_type: str, action: str) -> int:
@@ -103,9 +110,10 @@ def build_state(snapshot: dict[str, Any], trades: Iterable[dict[str, Any]]) -> d
             "security_code": key.security_code,
             "security_name": key.security_name,
             "position_type": key.position_type,
+            "account_type": key.account_type,
             "quantity": int(qty) if qty == qty.to_integral() else str(qty),
         }
-        for key, qty in sorted(positions.items(), key=lambda item: ((item[0].security_code or ""), item[0].security_name, item[0].position_type))
+        for key, qty in sorted(positions.items(), key=lambda item: ((item[0].security_code or ""), item[0].security_name, item[0].position_type, item[0].account_type or ""))
     ]
     return {
         "as_of": last_as_of,
@@ -122,7 +130,7 @@ def reconcile(current: dict[str, Any], verified_positions: Iterable[dict[str, An
     calculated = {_key(row): _quantity(row.get("quantity")) for row in current.get("positions") or []}
     external = {_key(row): _quantity(row.get("quantity")) for row in verified_positions}
     diffs = []
-    for key in sorted(set(calculated) | set(external), key=lambda k: ((k.security_code or ""), k.security_name, k.position_type)):
+    for key in sorted(set(calculated) | set(external), key=lambda k: ((k.security_code or ""), k.security_name, k.position_type, k.account_type or "")):
         calc = calculated.get(key, Decimal("0"))
         actual = external.get(key, Decimal("0"))
         if calc != actual:
@@ -130,6 +138,7 @@ def reconcile(current: dict[str, Any], verified_positions: Iterable[dict[str, An
                 "security_code": key.security_code,
                 "security_name": key.security_name,
                 "position_type": key.position_type,
+                "account_type": key.account_type,
                 "calculated_quantity": int(calc),
                 "verified_quantity": int(actual),
                 "difference": int(actual - calc),

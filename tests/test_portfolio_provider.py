@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
+import json
 import tempfile
 import unittest
 
@@ -58,6 +59,54 @@ class PortfolioProviderTest(unittest.TestCase):
             result = PortfolioProvider(path, today=date(2026, 8, 8)).collect()
             self.assertEqual("PARTIAL", result.status)
             self.assertEqual(1, len(result.data["positions"]))
+
+    def test_canonical_verified_json_is_primary_machine_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "current.json"
+            path.write_text(json.dumps({
+                "as_of": "2026-08-08",
+                "verification_status": "VERIFIED",
+                "base_snapshot": "verified-2026-08-08",
+                "positions": [{
+                    "security_code": "4063", "security_name": "信越化学",
+                    "position_type": "cash", "quantity": 100,
+                }],
+            }, ensure_ascii=False), encoding="utf-8")
+            result = PortfolioProvider(path, today=date(2026, 8, 8)).collect()
+            self.assertEqual("OK", result.status)
+            self.assertEqual("VERIFIED", result.data["verification_status"])
+            self.assertEqual("4063", result.data["positions"][0]["security_code"])
+
+    def test_canonical_mismatch_is_partial_with_diff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "current.json"
+            path.write_text(json.dumps({
+                "as_of": "2026-08-08",
+                "verification_status": "MISMATCH",
+                "positions": [{
+                    "security_code": "4063", "security_name": "信越化学",
+                    "position_type": "cash", "quantity": 100,
+                }],
+                "verification_diff": [{"security_code": "4063", "difference": 100}],
+            }, ensure_ascii=False), encoding="utf-8")
+            result = PortfolioProvider(path, today=date(2026, 8, 8)).collect()
+            self.assertEqual("PARTIAL", result.status)
+            self.assertEqual(100, result.data["verification_diff"][0]["difference"])
+
+    def test_canonical_invalid_date_is_partial_not_exception(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "current.json"
+            path.write_text(json.dumps({
+                "as_of": "unknown",
+                "verification_status": "PROVISIONAL",
+                "positions": [{
+                    "security_code": "4063", "security_name": "信越化学",
+                    "position_type": "cash", "quantity": 100,
+                }],
+            }, ensure_ascii=False), encoding="utf-8")
+            result = PortfolioProvider(path, today=date(2026, 8, 8)).collect()
+            self.assertEqual("PARTIAL", result.status)
+            self.assertIn("YYYY-MM-DD", result.reason)
 
 
 if __name__ == "__main__":

@@ -27,12 +27,28 @@ def refresh_portfolio(text: str, snapshot: dict) -> str:
         raise ValueError("portfolio snapshot requires YYYY-MM-DD as_of")
     if not isinstance(positions, list) or not positions:
         raise ValueError("portfolio snapshot requires non-empty positions")
-    body = [f"> as_of: {as_of}", "> authority: deterministic portfolio snapshot", ""]
+    status = snapshot.get("verification_status")
+    if status not in {None, "VERIFIED", "PROVISIONAL"}:
+        raise ValueError(f"portfolio snapshot cannot be published with status {status!r}")
+    authority = snapshot.get("authority") or "deterministic portfolio snapshot"
+    body = [f"> as_of: {as_of}", f"> authority: {authority}"]
+    if status:
+        body.append(f"> verification_status: {status}")
+    body.append("")
     for position in positions:
-        if not isinstance(position, dict) or not isinstance(position.get("name"), str) or not position["name"].strip():
+        if not isinstance(position, dict):
+            raise ValueError("each position must be an object")
+        raw_name = position.get("name") or position.get("security_name")
+        if not isinstance(raw_name, str) or not raw_name.strip():
             raise ValueError("each position requires a name")
-        name = position["name"].strip()
+        name = raw_name.strip()
         details = position.get("details")
+        if not details and position.get("position_type") and position.get("quantity") is not None:
+            labels = {"cash": "現物", "margin_long": "信用買い", "margin_short": "信用売り"}
+            position_type = position["position_type"]
+            if position_type not in labels:
+                raise ValueError(f"unknown position_type: {position_type!r}")
+            details = f"{labels[position_type]}{position['quantity']}株"
         body.append(f"- {name}（{details.strip()}）" if isinstance(details, str) and details.strip() else f"- {name}")
     return replace_section(text, "Portfolio", body)
 
