@@ -22,6 +22,7 @@ from scripts.morning_dataset.providers import (
     JsonFileProvider,
     MarketProvider,
     PortfolioProvider,
+    WatchlistProvider,
 )
 
 
@@ -39,6 +40,7 @@ def main() -> None:
     parser.add_argument("--events")
     parser.add_argument("--repo-events", action="store_true", help="collect events from repository data/events/calendar.json")
     parser.add_argument("--watchlist")
+    parser.add_argument("--repo-watchlist", action="store_true", help="collect active watch items from repository Current_Status.md Current Focus")
     parser.add_argument("--output", default="data/generated/public/morning-dataset.json")
     args = parser.parse_args()
 
@@ -52,6 +54,8 @@ def main() -> None:
         parser.error("--repo-candidates and --candidates are mutually exclusive")
     if args.repo_events and args.events:
         parser.error("--repo-events and --events are mutually exclusive")
+    if args.repo_watchlist and args.watchlist:
+        parser.error("--repo-watchlist and --watchlist are mutually exclusive")
 
     source_paths = {
         "market": args.market,
@@ -63,7 +67,7 @@ def main() -> None:
         "watchlist": args.watchlist,
     }
 
-    if args.live_market or args.repo_portfolio or args.repo_capital or args.repo_candidates or args.repo_events:
+    if args.live_market or args.repo_portfolio or args.repo_capital or args.repo_candidates or args.repo_events or args.repo_watchlist:
         providers = []
         if args.live_market:
             providers.append(MarketProvider())
@@ -75,6 +79,8 @@ def main() -> None:
             providers.append(CandidatesProvider(Path("data/database/history.db")))
         if args.repo_events:
             providers.append(EventsProvider(Path("data/events/calendar.json")))
+        if args.repo_watchlist:
+            providers.append(WatchlistProvider(Path("Current_Status.md")))
         providers.extend(
             JsonFileProvider(name, Path(path))
             for name, path in source_paths.items()
@@ -84,6 +90,7 @@ def main() -> None:
             and not (name == "capital" and args.repo_capital)
             and not (name == "candidates" and args.repo_candidates)
             and not (name == "events" and args.repo_events)
+            and not (name == "watchlist" and args.repo_watchlist)
         )
         dataset = build_dataset_from_providers(providers)
     else:
