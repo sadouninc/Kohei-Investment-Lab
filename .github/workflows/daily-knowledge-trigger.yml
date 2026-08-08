@@ -6,19 +6,21 @@ on:
   workflow_dispatch:
     inputs:
       event_fixture:
-        description: "Optional repository-relative JSON event fixture for manual validation"
+        description: "Repository-relative JSON event fixture for manual validation"
         required: false
         type: string
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+  issues: write
 
 concurrency:
   group: daily-knowledge-${{ github.event.issue.number || github.run_id }}
   cancel-in-progress: false
 
 jobs:
-  capture-and-plan:
+  integrate:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issues' && github.event.label.name == 'daily-knowledge')
@@ -29,6 +31,8 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Resolve event payload
         id: event
@@ -37,14 +41,8 @@ jobs:
           set -euo pipefail
           fixture="${{ inputs.event_fixture }}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ -z "$fixture" ]]; then
-              echo "workflow_dispatch requires event_fixture for validation"
-              exit 1
-            fi
-            if [[ ! -f "$fixture" ]]; then
-              echo "Event fixture not found: $fixture"
-              exit 1
-            fi
+            test -n "$fixture" || { echo "workflow_dispatch requires event_fixture"; exit 1; }
+            test -f "$fixture" || { echo "Event fixture not found: $fixture"; exit 1; }
             echo "path=$fixture" >> "$GITHUB_OUTPUT"
           else
             echo "path=$GITHUB_EVENT_PATH" >> "$GITHUB_OUTPUT"
@@ -54,7 +52,8 @@ jobs:
         run: |
           python3 -m unittest \
             tests.test_daily_knowledge_capture \
-            tests.test_daily_knowledge_planner
+            tests.test_daily_knowledge_planner \
+            tests.test_trade_journal_integrator
 
       - name: Capture daily-knowledge issue
         run: |
@@ -71,52 +70,78 @@ jobs:
           test -n "$path"
           echo "path=$path" >> "$GITHUB_OUTPUT"
 
-      - name: Verify capture diagnostic
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          paths = list(Path('data/generated/diagnostics/daily-knowledge').glob('issue-*.json'))
-          assert len(paths) == 1, paths
-          payload = json.loads(paths[0].read_text(encoding='utf-8'))
-          assert payload['status'] == 'CAPTURED', payload
-          assert payload['trigger']['label'] == 'daily-knowledge', payload
-          assert payload['next_stage'] == 'ai-integration-planner', payload
-          print('captured issue:', payload['issue']['number'], payload['issue']['title'])
-          PY
-
       - name: Generate AI integration plan
         run: |
           python3 scripts/daily_knowledge_planner.py \
             --input "${{ steps.capture.outputs.path }}" \
             --output data/generated/diagnostics/daily-knowledge/integration-plan.json
 
-      - name: Verify integration plan
+      - name: Apply Trade Journal integration
+        run: |
+          python3 scripts/trade_journal_integrator.py \
+            --input data/generated/diagnostics/daily-knowledge/integration-plan.json \
+            --repo-root . \
+            --diagnostic data/generated/diagnostics/daily-knowledge/trade-journal-result.json
+
+      - name: Prepare integration branch
+        id: change
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
+          issue="$(python3 -c "import json; print(json.load(open('data/generated/diagnostics/daily-knowledge/integration-plan.json'))['issue']['number'])")"
+          date="$(python3 -c "import json; print(json.load(open('data/generated/diagnostics/daily-knowledge/integration-plan.json'))['plan']['date'] or 'unknown-date')")"
+          branch="daily-knowledge/${date}-issue-${issue}"
+          echo "issue=$issue" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          if git diff --quiet -- 01_Portfolio/Transactions; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add 01_Portfolio/Transactions
+          git commit -m "Integrate daily knowledge from issue #${issue}"
+          git push --force-with-lease origin "$branch"
 
-          path = Path('data/generated/diagnostics/daily-knowledge/integration-plan.json')
-          payload = json.loads(path.read_text(encoding='utf-8'))
-          assert payload['status'] == 'PLANNED', payload
-          assert payload['next_stage'] == 'trade-journal-integrator', payload
-          assert payload['plan']['schema_version'] == 1, payload
-          assert payload['plan']['routing']['primary_target'] == '01_Portfolio/Transactions', payload
-          print('planned issue:', payload['issue']['number'])
-          print('trade journal update:', payload['plan']['trade_journal']['update'])
-          print('unresolved:', len(payload['plan']['unresolved']))
-          PY
+      - name: Create pull request
+        if: steps.change.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.change.outputs.branch }}
+          ISSUE: ${{ steps.change.outputs.issue }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$(python3 -c "import json; print(json.load(open('data/generated/diagnostics/daily-knowledge/trade-journal-result.json'))['target_file'])")"
+          unresolved="$(python3 -c "import json; print(len(json.load(open('data/generated/diagnostics/daily-knowledge/trade-journal-result.json'))['unresolved']))")"
+          url="$(gh pr create --base main --head "$BRANCH" --title "Integrate Daily Knowledge from issue #${ISSUE}" --body "## Daily Knowledge Integration
+
+Source: #${ISSUE}
+
+- Trade Journal target: \`${target}\`
+- Unresolved items kept non-canonical: ${unresolved}
+- Investor DNA / Framework / Companies remain proposal-only in this MVP.
+- Exact SBI CSV-derived trade facts remain authoritative.
+- Unit tests ran before branch creation.
+
+Human review is required before merge.
+
+Refs #75")"
+          gh issue comment "$ISSUE" --body "Daily Knowledge Integrator created a review PR: ${url}"
+
+      - name: Report no repository change
+        if: steps.change.outputs.changed == 'false' && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ steps.change.outputs.issue }}
+        run: gh issue comment "$ISSUE" --body "Daily Knowledge Integrator completed safely; the validated plan required no Trade Journal repository change, so no empty PR was created."
 
       - name: Upload Daily Knowledge diagnostics
         uses: actions/upload-artifact@v4
         with:
-          name: daily-knowledge-issue-${{ github.event.issue.number || github.run_id }}
+          name: daily-knowledge-issue-${{ steps.change.outputs.issue || github.run_id }}
           path: data/generated/diagnostics/daily-knowledge/*.json
           if-no-files-found: error
           retention-days: 14
