@@ -34,6 +34,7 @@ def build_page(payload: dict) -> str:
     ok_sources = quality.get("ok_sources", quality.get("available_sources", 0))
     total_sources = quality.get("total_sources", len(sources))
     completeness_label = quality.get("completeness_label") or f"{ok_sources} / {total_sources}"
+    completeness_percent = fmt(quality.get("completeness"))
     source_counts = quality.get("source_counts") or {}
 
     page = """---
@@ -58,7 +59,9 @@ permalink: /research/morning-dataset/
         f'<div class="metric-card"><span>Schema</span><strong>{esc(payload.get("schema_version", "—"))}</strong></div>'
         f'<div class="metric-card"><span>As of</span><strong>{esc(payload.get("as_of", "—"))}</strong></div>'
         f'<div class="metric-card"><span>Quality</span><strong>{esc(quality.get("status", "—"))}</strong></div>'
-        f'<div class="metric-card"><span>Completeness</span><strong>{esc(completeness_label)}</strong><small>{fmt(quality.get("completeness"))}</small></div>'
+        '<div class="metric-card"><span>Completeness</span>'
+        f'<strong>{esc(completeness_label)} sources</strong>'
+        f'<small> · {completeness_percent}</small></div>'
         '</div>\n\n'
     )
 
