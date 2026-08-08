@@ -37,16 +37,18 @@ jobs:
         run: |
           python3 -m unittest \
             tests.test_market_provider \
-            tests.test_portfolio_provider
+            tests.test_portfolio_provider \
+            tests.test_capital_provider
 
       - name: Generate Morning Dataset
         run: |
           python3 scripts/generate_morning_dataset.py \
             --live-market \
             --repo-portfolio \
+            --repo-capital \
             --investor-dna data/generated/public/investor-dna.json
 
-      - name: Verify market and portfolio sources are explicit
+      - name: Verify market, portfolio and capital sources are explicit
         shell: bash
         run: |
           set -euo pipefail
@@ -68,6 +70,13 @@ jobs:
               assert payload['portfolio']['positions'], payload['portfolio']
               assert portfolio.get('source_reference'), portfolio
           print('portfolio source:', portfolio['status'], portfolio.get('as_of'), portfolio.get('reason'))
+
+          capital=next(row for row in payload['source_status'] if row['name']=='capital')
+          assert capital['status'] in {'OK','PARTIAL','STALE','MISSING'}, capital
+          if capital['status'] != 'MISSING':
+              assert payload['capital'], payload['capital']
+              assert capital.get('source_reference'), capital
+          print('capital source:', capital['status'], capital.get('as_of'), capital.get('reason'))
           PY
 
       - name: Test context optimizer

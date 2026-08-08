@@ -15,7 +15,7 @@ from scripts.morning_dataset.generator import (
     load_json_source,
     write_dataset,
 )
-from scripts.morning_dataset.providers import JsonFileProvider, MarketProvider, PortfolioProvider
+from scripts.morning_dataset.providers import CapitalProvider, JsonFileProvider, MarketProvider, PortfolioProvider
 
 
 def main() -> None:
@@ -25,6 +25,7 @@ def main() -> None:
     parser.add_argument("--portfolio")
     parser.add_argument("--repo-portfolio", action="store_true", help="collect portfolio from repository Current_Status.md")
     parser.add_argument("--capital")
+    parser.add_argument("--repo-capital", action="store_true", help="collect latest capital snapshot from repository history.db")
     parser.add_argument("--candidates")
     parser.add_argument("--investor-dna")
     parser.add_argument("--events")
@@ -36,6 +37,8 @@ def main() -> None:
         parser.error("--live-market and --market are mutually exclusive")
     if args.repo_portfolio and args.portfolio:
         parser.error("--repo-portfolio and --portfolio are mutually exclusive")
+    if args.repo_capital and args.capital:
+        parser.error("--repo-capital and --capital are mutually exclusive")
 
     source_paths = {
         "market": args.market,
@@ -47,16 +50,21 @@ def main() -> None:
         "watchlist": args.watchlist,
     }
 
-    if args.live_market or args.repo_portfolio:
+    if args.live_market or args.repo_portfolio or args.repo_capital:
         providers = []
         if args.live_market:
             providers.append(MarketProvider())
         if args.repo_portfolio:
             providers.append(PortfolioProvider(Path("Current_Status.md")))
+        if args.repo_capital:
+            providers.append(CapitalProvider(Path("data/database/history.db")))
         providers.extend(
             JsonFileProvider(name, Path(path))
             for name, path in source_paths.items()
-            if path and not (name == "market" and args.live_market) and not (name == "portfolio" and args.repo_portfolio)
+            if path
+            and not (name == "market" and args.live_market)
+            and not (name == "portfolio" and args.repo_portfolio)
+            and not (name == "capital" and args.repo_capital)
         )
         dataset = build_dataset_from_providers(providers)
     else:
